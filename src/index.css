@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #ece5d6;
+  --color-paper-2: #e4dccb;
+  --color-ink: #211d18;
+  --color-ink-soft: #4a4339;
+  --color-jade: #4c6b5e;
+  --color-jade-deep: #2f463c;
+  --color-seal: #9e342a;
+
+  --font-serif-zh: "Noto Serif SC", serif;
+  --font-serif-en: "Spectral", Georgia, serif;
+  --font-ui: "Inter", system-ui, sans-serif;
+}
+
+:root {
+  --jade-deep: #2f463c;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background-color: #ece5d6;
+  /* faint rice-paper grain */
+  background-image:
+    radial-gradient(circle at 20% 15%, rgba(0,0,0,0.018) 0, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(0,0,0,0.02) 0, transparent 45%);
+  color: #211d18;
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-zh { font-family: var(--font-serif-zh); }
+.font-en { font-family: var(--font-serif-en); }
+
+/* ---- signature: vertical proverb ---- */
+.proverb-col {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.18em;
+  font-family: var(--font-serif-zh);
+  line-height: 1.05;
+}
+
+/* hairline divider in ink */
+.rule-ink { border-color: rgba(33,29,24,0.16); }
+
+/* pillar card */
+.pillar {
+  background: rgba(255,255,255,0.34);
+  border: 1px solid rgba(33,29,24,0.12);
+}
+.pillar-glyph {
+  font-family: var(--font-serif-zh);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* seal mark */
+.seal {
+  background: var(--color-seal);
+  color: #f3ece1;
+  font-family: var(--font-serif-zh);
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+}
+
+/* reveal animation */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 0.7s cubic-bezier(0.2,0.7,0.2,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* focus visibility */
+:focus-visible {
+  outline: 2px solid var(--color-jade);
+  outline-offset: 2px;
+}
+
+input, select, button { font-family: inherit; }
