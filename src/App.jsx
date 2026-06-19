@@ -2,18 +2,27 @@ import { useState, useMemo } from 'react'
 import { STRINGS } from './strings.js'
 import { computeBazi, ELEMENTS, ELEMENT_META } from './bazi.js'
 
-const SHOP_URL = 'https://example.com/shop' // TODO: 换成你的店铺/独立站地址
+const SHOP_URL = 'https://example.com/shop' // TODO: 换成你的店铺/独立站地址（留 example.com 则显示"筹备中"）
+const TIP_URL = 'https://ko-fi.com/oneming' // Ko-fi 已激活
 
-function Header({ lang, setLang, t }) {
+const SHOP_READY = !SHOP_URL.includes('example.com')
+const TIP_READY = true // Ko-fi 已绑定，按钮激活
+
+function Header({ lang, setLang, t, onHome }) {
   return (
     <header className="flex items-center justify-between px-6 py-5 md:px-12">
-      <div className="flex items-center gap-3">
+      <button
+        type="button"
+        onClick={onHome}
+        aria-label={lang === 'zh' ? '返回主页' : 'Back to home'}
+        className="flex items-center gap-3 rounded-lg transition hover:opacity-80"
+      >
         <span className="seal flex h-9 w-9 items-center justify-center text-lg leading-none">命</span>
-        <div className="leading-tight">
+        <div className="text-left leading-tight">
           <div className="font-zh text-xl font-bold tracking-wide">ONEMING</div>
           <div className="text-[11px] tracking-[0.3em] text-[var(--color-ink-soft)]">{lang === 'zh' ? '一 命' : '一命'}</div>
         </div>
-      </div>
+      </button>
       <div className="flex items-center gap-4">
         <span className="hidden rounded-full border border-[rgba(33,29,24,0.18)] px-3 py-1 text-[11px] tracking-wide text-[var(--color-ink-soft)] sm:inline">
           {t.badge}
@@ -188,23 +197,60 @@ function Result({ data, t, lang }) {
   )
 }
 
-function Shop({ t }) {
+function Support({ t }) {
   return (
     <section className="border-y border-[rgba(33,29,24,0.12)] bg-[rgba(76,107,94,0.07)]">
       <div className="mx-auto flex max-w-4xl flex-col items-start gap-4 px-6 py-12 md:flex-row md:items-center md:justify-between md:px-12">
         <div className="max-w-xl">
-          <div className="text-xs tracking-[0.3em] text-[var(--color-jade)]">{t.shopEyebrow}</div>
-          <h2 className="font-zh mt-2 text-2xl font-semibold">{t.shopTitle}</h2>
-          <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-soft)]">{t.shopBody}</p>
+          <div className="text-xs tracking-[0.3em] text-[var(--color-jade)]">{t.tipEyebrow}</div>
+          <h2 className="font-zh mt-2 text-2xl font-semibold">{t.tipTitle}</h2>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-soft)]">{t.tipBody}</p>
         </div>
-        <a
-          href={SHOP_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="shrink-0 rounded-full bg-[var(--color-ink)] px-7 py-3 text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]"
-        >
-          {t.shopCta}
-        </a>
+        {TIP_READY ? (
+          <a
+            href={TIP_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="shrink-0 rounded-full bg-[var(--color-ink)] px-7 py-3 text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]"
+          >
+            {t.tipCta}
+          </a>
+        ) : (
+          <span
+            className="shrink-0 cursor-not-allowed rounded-full border border-[rgba(33,29,24,0.25)] px-7 py-3 text-[var(--color-ink-soft)]"
+            title="设置 TIP_URL 后启用"
+          >
+            {t.tipCta}
+          </span>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function Shop({ t }) {
+  return (
+    <section className="mx-auto max-w-4xl px-6 py-10 md:px-12">
+      <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="max-w-xl">
+          <div className="text-[11px] tracking-[0.3em] text-[var(--color-ink-soft)]">{t.shopEyebrow}</div>
+          <h2 className="font-zh mt-1.5 text-lg font-semibold text-[var(--color-ink-soft)]">{t.shopTitle}</h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-ink-soft)]">{t.shopBody}</p>
+        </div>
+        {SHOP_READY ? (
+          <a
+            href={SHOP_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="shrink-0 rounded-full border border-[var(--color-jade)] px-6 py-2.5 text-sm text-[var(--color-jade)] transition hover:bg-[var(--color-jade)] hover:text-[var(--color-paper)]"
+          >
+            {t.shopCta}
+          </a>
+        ) : (
+          <span className="shrink-0 rounded-full border border-[rgba(33,29,24,0.15)] px-5 py-2 text-xs tracking-wider text-[var(--color-ink-soft)]">
+            {t.shopSoon}
+          </span>
+        )}
       </div>
     </section>
   )
@@ -233,12 +279,17 @@ export default function App() {
     document.getElementById('form')?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  function goHome() {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
     <div className="min-h-screen">
-      <Header lang={lang} setLang={setLang} t={t} />
+      <Header lang={lang} setLang={setLang} t={t} onHome={goHome} />
       <Hero t={t} lang={lang} onStart={scrollToForm} />
       <BaziForm t={t} onSubmit={setInput} />
       {data && <Result key={lang + JSON.stringify(input)} data={data} t={t} lang={lang} />}
+      <Support t={t} />
       <Shop t={t} />
       <Disclaimer t={t} />
       <footer className="border-t border-[rgba(33,29,24,0.12)] px-6 py-8 text-center md:px-12">
