@@ -11,15 +11,28 @@ const TIP_URL = 'https://ko-fi.com/oneming' // Ko-fi 已激活
 // AI 文笔层：解读长度（'concise' 精简档 / 'standard' 标准档）
 const READING_MODE = 'concise'
 
-// 会话内缓存：同一张盘+语言只调一次模型
-const readingCache = new Map()
+// 持久缓存：同一张盘+语言只调一次模型，跨会话生效（存浏览器本地，不上传）
+const MEM_CACHE = new Map()
+function cacheGet(key) {
+  if (MEM_CACHE.has(key)) return MEM_CACHE.get(key)
+  try {
+    const v = localStorage.getItem('reading:' + key)
+    if (v) { MEM_CACHE.set(key, v); return v }
+  } catch (e) { /* localStorage 不可用则忽略 */ }
+  return null
+}
+function cacheSet(key, val) {
+  MEM_CACHE.set(key, val)
+  try { localStorage.setItem('reading:' + key, val) } catch (e) { /* 忽略 */ }
+}
 
 // DeepSeek 适配器：把脱敏盘面事实发给后端函数 /api/reading（Key 在服务端）。
 // 任何失败（接口未部署 / 超时 / 违规被拒）都会抛错 → 编排器自动回退到兜底文案。
 async function callModel(_prompt, ctx) {
   const { analysis, chart, lang } = ctx
   const key = chart.pillars.map((p) => p.gan + p.zhi).join('') + ':' + lang + ':' + READING_MODE
-  if (readingCache.has(key)) return readingCache.get(key)
+  const cached = cacheGet(key)
+  if (cached) return cached
 
   const elName = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
   const facts = {
@@ -48,7 +61,7 @@ async function callModel(_prompt, ctx) {
     if (!r.ok) throw new Error('api ' + r.status)
     const d = await r.json()
     if (!d.text) throw new Error('no text')
-    readingCache.set(key, d.text)
+    cacheSet(key, d.text)
     return d.text
   } catch (e) {
     clearTimeout(timer)
@@ -60,6 +73,29 @@ const SHOP_READY = !SHOP_URL.includes('example.com')
 const TIP_READY = true // Ko-fi 已绑定，按钮激活
 
 const STRENGTH_TERM = { weak: 'shenruo', balanced: 'zhonghe', strong: 'shenqiang' }
+
+// 从 URL 还原命盘：oneming.net/?d=1995-08-15&t=14:30&g=male
+function parseUrlSeed() {
+  try {
+    const p = new URLSearchParams(window.location.search)
+    const d = p.get('d')
+    if (!d) return null
+    const tm = p.get('t') || '12:00'
+    const g = p.get('g') === 'female' ? 'female' : 'male'
+    const [y, m, dd] = d.split('-').map(Number)
+    const [hh, mm] = tm.split(':').map(Number)
+    if (!y || !m || !dd) return null
+    return { input: { y, m, d: dd, hh: hh || 0, mm: mm || 0, gender: g }, fields: { date: d, time: tm, gender: g } }
+  } catch (e) {
+    return null
+  }
+}
+
+function buildShareUrl(input) {
+  const d = `${input.y}-${String(input.m).padStart(2, '0')}-${String(input.d).padStart(2, '0')}`
+  const tm = `${String(input.hh).padStart(2, '0')}:${String(input.mm).padStart(2, '0')}`
+  return `${window.location.origin}/?d=${d}&t=${tm}&g=${input.gender}`
+}
 
 
 function Header({ lang, setLang, t, onHome }) {
@@ -143,10 +179,10 @@ function Field({ label, children }) {
 const inputCls =
   'w-full rounded-lg border border-[rgba(33,29,24,0.18)] bg-[rgba(255,255,255,0.5)] px-3 py-2.5 text-[var(--color-ink)] outline-none transition focus:border-[var(--color-jade)]'
 
-function BaziForm({ t, onSubmit }) {
-  const [date, setDate] = useState('1995-08-15')
-  const [time, setTime] = useState('14:30')
-  const [gender, setGender] = useState('male')
+function BaziForm({ t, onSubmit, initial }) {
+  const [date, setDate] = useState(initial?.date || '1995-08-15')
+  const [time, setTime] = useState(initial?.time || '14:30')
+  const [gender, setGender] = useState(initial?.gender || 'male')
 
   function handle() {
     const [y, m, d] = date.split('-').map(Number)
@@ -256,6 +292,38 @@ function TermModal({ id, lang, t, onClose }) {
   )
 }
 
+function SaveShare({ input, t }) {
+  const [done, setDone] = useState(false)
+  if (!input) return null
+  async function share() {
+    const url = buildShareUrl(input)
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch (e) {
+      // 退化方案：用临时输入框
+      const ta = document.createElement('textarea')
+      ta.value = url
+      document.body.appendChild(ta)
+      ta.select()
+      try { document.execCommand('copy') } catch (e2) { /* 忽略 */ }
+      document.body.removeChild(ta)
+    }
+    setDone(true)
+    setTimeout(() => setDone(false), 2200)
+  }
+  return (
+    <div className="mt-4 flex items-center gap-3">
+      <button
+        onClick={share}
+        className="rounded-full border border-[var(--color-jade)] px-4 py-1.5 text-sm text-[var(--color-jade)] transition hover:bg-[var(--color-jade)] hover:text-[var(--color-paper)]"
+      >
+        {done ? t.shareDone : t.shareLabel}
+      </button>
+      <span className="text-[11px] text-[var(--color-ink-soft)]">{t.shareHint}</span>
+    </div>
+  )
+}
+
 function Reading({ data, t, lang, onTerm }) {
   const analysis = useMemo(() => analyzeChart(data, lang), [data, lang])
   const [reading, setReading] = useState(() => fallbackProse(analysis, lang))
@@ -310,9 +378,9 @@ function Reading({ data, t, lang, onTerm }) {
   )
 }
 
-function Result({ data, t, lang, onTerm }) {
+function Result({ data, input, t, lang, onTerm }) {
   return (
-    <section className="mx-auto max-w-3xl px-6 pb-16 md:px-12">
+    <section id="result" className="mx-auto max-w-3xl px-6 pb-16 md:px-12">
       <div className="rise rounded-2xl border border-[rgba(33,29,24,0.12)] bg-[rgba(255,255,255,0.3)] p-6 md:p-9">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-zh text-3xl font-bold">{t.resultTitle}</h2>
@@ -326,22 +394,18 @@ function Result({ data, t, lang, onTerm }) {
           <span>· {t.dayMaster} {data.dayGan}（{ELEMENT_META[data.dayElement][lang === 'en' ? 'en' : 'zh']}）</span>
         </div>
 
+        <SaveShare input={input} t={t} />
+
         {/* four pillars */}
         <div className="mt-7 grid grid-cols-4 gap-2.5 md:gap-4">
           {data.pillars.map((p) => <Pillar key={p.key} p={p} lang={lang} />)}
         </div>
 
-        {/* elements + tone */}
-        <div className="mt-9 grid grid-cols-1 gap-8 md:grid-cols-2">
-          <div>
-            <h3 className="font-zh mb-3 text-lg font-semibold">{t.elementsLabel}</h3>
-            <ElementsBar counts={data.counts} lang={lang} />
-            <p className="mt-4 text-sm leading-relaxed text-[var(--color-ink-soft)]">{data.balance}</p>
-          </div>
-          <div>
-            <h3 className="font-zh mb-3 text-lg font-semibold">{t.toneTitle}</h3>
-            <p className="text-[15px] leading-relaxed">{data.tone}</p>
-          </div>
+        {/* 五行分布（性格解读已由下方 AI 解读覆盖，去掉重复的"性格基调"） */}
+        <div className="mt-9">
+          <h3 className="font-zh mb-3 text-lg font-semibold">{t.elementsLabel}</h3>
+          <ElementsBar counts={data.counts} lang={lang} />
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--color-ink-soft)]">{data.balance}</p>
         </div>
 
         <Reading data={data} t={t} lang={lang} onTerm={onTerm} />
@@ -419,8 +483,9 @@ function Disclaimer({ t }) {
 }
 
 export default function App() {
+  const urlSeed = useMemo(() => parseUrlSeed(), [])
   const [lang, setLang] = useState('zh')
-  const [input, setInput] = useState(null)
+  const [input, setInput] = useState(urlSeed?.input ?? null)
   const [activeTerm, setActiveTerm] = useState(null)
   const t = STRINGS[lang]
 
@@ -434,15 +499,24 @@ export default function App() {
   }
 
   function goHome() {
+    setInput(null)
+    setActiveTerm(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  useEffect(() => {
+    if (urlSeed) {
+      const id = setTimeout(() => document.getElementById('result')?.scrollIntoView({ behavior: 'smooth' }), 300)
+      return () => clearTimeout(id)
+    }
+  }, [])
 
   return (
     <div className="min-h-screen">
       <Header lang={lang} setLang={setLang} t={t} onHome={goHome} />
       <Hero t={t} lang={lang} onStart={scrollToForm} />
-      <BaziForm t={t} onSubmit={setInput} />
-      {data && <Result key={lang + JSON.stringify(input)} data={data} t={t} lang={lang} onTerm={setActiveTerm} />}
+      <BaziForm t={t} onSubmit={setInput} initial={urlSeed?.fields} />
+      {data && <Result key={lang + JSON.stringify(input)} data={data} input={input} t={t} lang={lang} onTerm={setActiveTerm} />}
       <Support t={t} />
       <Shop t={t} />
       <Disclaimer t={t} />
