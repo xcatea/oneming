@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { STRINGS } from './strings.js'
 import { computeBazi, ELEMENTS, ELEMENT_META } from './bazi.js'
 import { analyzeChart } from './analyze.js'
@@ -324,6 +324,230 @@ function SaveShare({ input, t }) {
   )
 }
 
+// ===== 命盘卡片（canvas 本地绘制） =====
+const CARD = { w: 1080, h: 1440, pad: 90, paper: '#ece5d6', ink: '#211d18', soft: '#6b6457', jade: '#4c6b5e', seal: '#9e342a' }
+
+function firstSentence(text) {
+  const s = (text || '').replace(/\n+/g, ' ').split(/[。.!?！？]/).map((x) => x.trim()).filter(Boolean)
+  return s[0] || ''
+}
+function wrapLines(ctx, text, maxWidth, isEn) {
+  const lines = []
+  if (isEn) {
+    let line = ''
+    for (const w of text.split(' ')) {
+      const test = line ? line + ' ' + w : w
+      if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w } else line = test
+    }
+    if (line) lines.push(line)
+  } else {
+    let line = ''
+    for (const ch of text) {
+      const test = line + ch
+      if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = ch } else line = test
+    }
+    if (line) lines.push(line)
+  }
+  return lines
+}
+
+function drawCard(ctx, { chart, analysis, reading, lang, full }) {
+  const { w, h, pad } = CARD
+  const isEn = lang === 'en'
+  const serif = '"Noto Serif SC", serif'
+  const elZh = (e) => ELEMENT_META[e].zh
+  const elName = (e) => (isEn ? ELEMENT_META[e].en : ELEMENT_META[e].zh)
+  const elColor = (e) => ELEMENT_META[e].color
+
+  // 背景
+  ctx.fillStyle = CARD.paper
+  ctx.fillRect(0, 0, w, h)
+  ctx.fillStyle = 'rgba(0,0,0,0.015)'
+  ctx.beginPath(); ctx.arc(w * 0.18, h * 0.1, 260, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(w * 0.85, h * 0.9, 300, 0, Math.PI * 2); ctx.fill()
+  // 边框
+  ctx.strokeStyle = 'rgba(33,29,24,0.14)'; ctx.lineWidth = 2
+  ctx.strokeRect(40, 40, w - 80, h - 80)
+
+  // —— 顶部品牌 ——
+  ctx.fillStyle = CARD.seal
+  roundRect(ctx, pad, 86, 92, 92, 14); ctx.fill()
+  ctx.fillStyle = '#f3ece1'; ctx.font = `700 54px ${serif}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  ctx.fillText('命', pad + 46, 86 + 50)
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
+  ctx.fillStyle = CARD.ink; ctx.font = `700 42px ${serif}`
+  ctx.fillText('ONEMING', pad + 116, 132)
+  ctx.fillStyle = CARD.soft; ctx.font = `400 24px ${serif}`
+  ctx.fillText(isEn ? 'YI MING' : '一 命', pad + 118, 172)
+  // 右上角 生肖·星座
+  ctx.textAlign = 'right'; ctx.fillStyle = CARD.soft; ctx.font = `400 28px ${serif}`
+  ctx.fillText(`${chart.shengxiao} · ${chart.xingzuo}`, w - pad, 150)
+  ctx.textAlign = 'left'
+
+  const cx = w / 2
+
+  if (!full) {
+    // —— 氛围卡：日主大字 + 旺衰 + 金句 ——
+    ctx.textAlign = 'center'
+    ctx.fillStyle = CARD.soft; ctx.font = `400 30px ${serif}`
+    ctx.fillText(isEn ? 'DAY MASTER' : '日　主', cx, 372)
+    ctx.fillStyle = elColor(analysis.dayElement); ctx.font = `700 156px ${serif}`
+    ctx.fillText(`${chart.dayGan}${elZh(analysis.dayElement)}`, cx, 540)
+    ctx.fillStyle = CARD.ink; ctx.font = `400 46px ${serif}`
+    ctx.fillText(analysis.strength.label, cx, 612)
+    // 分隔
+    ctx.strokeStyle = 'rgba(76,107,94,0.5)'; ctx.lineWidth = 2
+    ctx.beginPath(); ctx.moveTo(cx - 60, 668); ctx.lineTo(cx + 60, 668); ctx.stroke()
+    // 金句
+    ctx.fillStyle = CARD.ink; ctx.font = `400 46px ${serif}`
+    const quote = firstSentence(reading)
+    const lines = wrapLines(ctx, quote, w - 2 * pad - 60, isEn).slice(0, 3)
+    let qy = 752
+    for (const ln of lines) { ctx.fillText(ln, cx, qy); qy += 70 }
+  } else {
+    // —— 完整卡：四柱 ——
+    const cols = chart.pillars
+    const labels = isEn ? ['Year', 'Month', 'Day', 'Hour'] : ['年', '月', '日', '时']
+    const colW = (w - 2 * pad) / 4
+    ctx.textAlign = 'center'
+    cols.forEach((p, i) => {
+      const x = pad + colW * (i + 0.5)
+      ctx.fillStyle = CARD.soft; ctx.font = `400 30px ${serif}`
+      ctx.fillText(labels[i], x, 332)
+      ctx.fillStyle = elColor(p.ganElement); ctx.font = `700 92px ${serif}`
+      ctx.fillText(p.gan, x, 446)
+      ctx.fillStyle = elColor(p.zhiElement); ctx.font = `700 92px ${serif}`
+      ctx.fillText(p.zhi, x, 552)
+    })
+    ctx.fillStyle = CARD.ink; ctx.font = `400 42px ${serif}`
+    ctx.fillText(`${isEn ? 'Day Master ' : '日主 '}${chart.dayGan}${elZh(analysis.dayElement)} · ${analysis.strength.label}`, cx, 648)
+    ctx.strokeStyle = 'rgba(76,107,94,0.5)'; ctx.lineWidth = 2
+    ctx.beginPath(); ctx.moveTo(cx - 60, 700); ctx.lineTo(cx + 60, 700); ctx.stroke()
+    ctx.fillStyle = CARD.ink; ctx.font = `400 42px ${serif}`
+    const quote = firstSentence(reading)
+    const lines = wrapLines(ctx, quote, w - 2 * pad - 60, isEn).slice(0, 2)
+    let qy = 768
+    for (const ln of lines) { ctx.fillText(ln, cx, qy); qy += 60 }
+  }
+
+  // —— 五行分布（柱状） ——
+  ctx.textAlign = 'center'
+  ctx.fillStyle = CARD.soft; ctx.font = `400 30px ${serif}`
+  ctx.fillText(isEn ? 'FIVE ELEMENTS' : '五　行', cx, 980)
+  const counts = chart.counts
+  const maxC = Math.max(...ELEMENTS.map((e) => counts[e]), 1)
+  const barW = 64, gap = 44
+  const totalW = ELEMENTS.length * barW + (ELEMENTS.length - 1) * gap
+  const startX = (w - totalW) / 2
+  const barsBottom = 1168, barMaxH = 116
+  ELEMENTS.forEach((e, i) => {
+    const x = startX + i * (barW + gap)
+    const hh = counts[e] === 0 ? 4 : Math.max(10, (counts[e] / maxC) * barMaxH)
+    ctx.fillStyle = elColor(e)
+    roundRect(ctx, x, barsBottom - hh, barW, hh, 8); ctx.fill()
+    ctx.fillStyle = CARD.soft; ctx.font = `400 28px ${serif}`
+    ctx.fillText(String(counts[e]), x + barW / 2, barsBottom - hh - 14)
+    ctx.fillStyle = elColor(e); ctx.font = `700 38px ${serif}`
+    ctx.fillText(elZh(e), x + barW / 2, barsBottom + 46)
+  })
+
+  // —— 喜用 ——
+  ctx.fillStyle = CARD.soft; ctx.font = `400 34px ${serif}`
+  const favorLabel = isEn ? 'Favors  ' : '喜用　'
+  const favs = analysis.favor.elements
+  // 居中排：标签 + 元素色块
+  ctx.textAlign = 'left'
+  const chipW = 64, chipGap = 18
+  const labelW = ctx.measureText(favorLabel).width
+  const rowW = labelW + favs.length * chipW + (favs.length - 1) * chipGap
+  let fx = cx - rowW / 2
+  const fy = 1276
+  ctx.fillText(favorLabel, fx, fy + 44)
+  fx += labelW
+  favs.forEach((e) => {
+    ctx.fillStyle = elColor(e) + '26'
+    roundRect(ctx, fx, fy, chipW, chipW, 14); ctx.fill()
+    ctx.fillStyle = elColor(e); ctx.font = `700 40px ${serif}`; ctx.textAlign = 'center'
+    ctx.fillText(elZh(e), fx + chipW / 2, fy + 46)
+    ctx.textAlign = 'left'; ctx.font = `400 34px ${serif}`
+    fx += chipW + chipGap
+  })
+
+  // —— 水印 ——
+  ctx.textAlign = 'center'
+  ctx.fillStyle = CARD.jade; ctx.font = `700 36px ${serif}`
+  ctx.fillText('oneming.net', cx, 1388)
+  ctx.fillStyle = CARD.soft; ctx.font = `400 24px ${serif}`
+  ctx.fillText(isEn ? 'Free BaZi · for fun' : '免费排八字 · 传统文化娱乐参考', cx, 1422)
+  ctx.textAlign = 'left'
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.arcTo(x + w, y, x + w, y + h, r)
+  ctx.arcTo(x + w, y + h, x, y + h, r)
+  ctx.arcTo(x, y + h, x, y, r)
+  ctx.arcTo(x, y, x + w, y, r)
+  ctx.closePath()
+}
+
+function CardModal({ chart, analysis, reading, lang, t, onClose }) {
+  const canvasRef = useRef(null)
+  const [full, setFull] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      try {
+        await document.fonts.load(`700 150px "Noto Serif SC"`)
+        await document.fonts.load(`400 46px "Noto Serif SC"`)
+        await document.fonts.ready
+      } catch (e) { /* 字体加载失败也尽量画 */ }
+      if (cancelled || !canvasRef.current) return
+      drawCard(canvasRef.current.getContext('2d'), { chart, analysis, reading, lang, full })
+    }
+    run()
+    return () => { cancelled = true }
+  }, [full, lang, chart, analysis, reading])
+
+  function download() {
+    const c = canvasRef.current
+    if (!c) return
+    c.toBlob((blob) => {
+      if (!blob) return
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = 'oneming-card.png'
+      document.body.appendChild(a); a.click(); a.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    }, 'image/png')
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-[rgba(20,18,15,0.55)] p-0 md:items-center md:p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-t-2xl bg-[var(--color-paper)] p-5 shadow-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-3 flex items-center justify-between">
+          <div className="inline-flex rounded-full border border-[rgba(33,29,24,0.15)] p-0.5 text-sm">
+            <button onClick={() => setFull(false)} className={`rounded-full px-3 py-1 transition ${!full ? 'bg-[var(--color-jade)] text-[var(--color-paper)]' : 'text-[var(--color-ink-soft)]'}`}>{t.cardVibe}</button>
+            <button onClick={() => setFull(true)} className={`rounded-full px-3 py-1 transition ${full ? 'bg-[var(--color-jade)] text-[var(--color-paper)]' : 'text-[var(--color-ink-soft)]'}`}>{t.cardFull}</button>
+          </div>
+          <button onClick={onClose} className="text-sm text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]">{t.cardClose} ✕</button>
+        </div>
+
+        <canvas ref={canvasRef} width={CARD.w} height={CARD.h} className="w-full rounded-xl shadow-md" style={{ aspectRatio: '3 / 4' }} />
+
+        {full && <p className="mt-3 text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.cardPrivacy}</p>}
+
+        <button onClick={download} className="mt-4 w-full rounded-full bg-[var(--color-ink)] py-3 text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]">
+          {t.cardDownload}
+        </button>
+        <p className="mt-2 text-center text-[11px] text-[var(--color-ink-soft)]">{t.cardSaved}</p>
+      </div>
+    </div>
+  )
+}
+
 function Reading({ data, t, lang, onTerm }) {
   const analysis = useMemo(() => analyzeChart(data, lang), [data, lang])
   const [reading, setReading] = useState(() => fallbackProse(analysis, lang))
@@ -335,6 +559,7 @@ function Reading({ data, t, lang, onTerm }) {
   }, [analysis, data, lang])
 
   const elName = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
+  const [cardOpen, setCardOpen] = useState(false)
 
   return (
     <div className="mt-9 border-t border-[rgba(33,29,24,0.1)] pt-7">
@@ -374,6 +599,17 @@ function Reading({ data, t, lang, onTerm }) {
           </button>
         ))}
       </div>
+
+      <button
+        onClick={() => setCardOpen(true)}
+        className="mt-6 rounded-full bg-[var(--color-jade)] px-6 py-2.5 text-sm text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]"
+      >
+        {t.cardLabel}
+      </button>
+
+      {cardOpen && (
+        <CardModal chart={data} analysis={analysis} reading={reading} lang={lang} t={t} onClose={() => setCardOpen(false)} />
+      )}
     </div>
   )
 }
