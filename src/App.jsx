@@ -1,12 +1,66 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { STRINGS } from './strings.js'
 import { computeBazi, ELEMENTS, ELEMENT_META } from './bazi.js'
+import { analyzeChart } from './analyze.js'
+import { generateReading, fallbackProse } from './reading.js'
+import { TERM_BY_ID } from './terms.js'
 
 const SHOP_URL = 'https://example.com/shop' // TODO: 换成你的店铺/独立站地址（留 example.com 则显示"筹备中"）
 const TIP_URL = 'https://ko-fi.com/oneming' // Ko-fi 已激活
 
+// AI 文笔层：解读长度（'concise' 精简档 / 'standard' 标准档）
+const READING_MODE = 'concise'
+
+// 会话内缓存：同一张盘+语言只调一次模型
+const readingCache = new Map()
+
+// DeepSeek 适配器：把脱敏盘面事实发给后端函数 /api/reading（Key 在服务端）。
+// 任何失败（接口未部署 / 超时 / 违规被拒）都会抛错 → 编排器自动回退到兜底文案。
+async function callModel(_prompt, ctx) {
+  const { analysis, chart, lang } = ctx
+  const key = chart.pillars.map((p) => p.gan + p.zhi).join('') + ':' + lang + ':' + READING_MODE
+  if (readingCache.has(key)) return readingCache.get(key)
+
+  const elName = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
+  const facts = {
+    dayGan: chart.dayGan,
+    dayElement: elName(analysis.dayElement),
+    strengthLabel: analysis.strength.label,
+    strengthReason: analysis.strength.reason,
+    favorElements: analysis.favor.elements.map(elName),
+    favorLogic: analysis.favor.logic,
+    core: analysis.traits.core,
+    leverage: analysis.traits.leverage,
+    lang,
+    mode: READING_MODE,
+  }
+
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 15000)
+  try {
+    const r = await fetch('/api/reading', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(facts),
+      signal: ctrl.signal,
+    })
+    clearTimeout(timer)
+    if (!r.ok) throw new Error('api ' + r.status)
+    const d = await r.json()
+    if (!d.text) throw new Error('no text')
+    readingCache.set(key, d.text)
+    return d.text
+  } catch (e) {
+    clearTimeout(timer)
+    throw e
+  }
+}
+
 const SHOP_READY = !SHOP_URL.includes('example.com')
 const TIP_READY = true // Ko-fi 已绑定，按钮激活
+
+const STRENGTH_TERM = { weak: 'shenruo', balanced: 'zhonghe', strong: 'shenqiang' }
+
 
 function Header({ lang, setLang, t, onHome }) {
   return (
@@ -159,7 +213,104 @@ function ElementsBar({ counts, lang }) {
   )
 }
 
-function Result({ data, t, lang }) {
+function TermLink({ id, onTerm, children }) {
+  if (!TERM_BY_ID[id]) return <span>{children}</span>
+  return (
+    <button
+      type="button"
+      onClick={() => onTerm(id)}
+      className="cursor-help underline decoration-dotted decoration-[var(--color-jade)] underline-offset-4 transition hover:text-[var(--color-jade)]"
+    >
+      {children}
+    </button>
+  )
+}
+
+function TermModal({ id, lang, t, onClose }) {
+  const term = TERM_BY_ID[id]
+  if (!term) return null
+  const v = (zh, en) => (lang === 'en' ? en : zh)
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[rgba(20,18,15,0.45)] p-0 md:items-center md:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg rounded-t-2xl bg-[var(--color-paper)] p-6 shadow-2xl md:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="font-zh text-xl font-bold">{v(term.zh, term.en)}</h3>
+          <button onClick={onClose} className="text-sm text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]">
+            {t.termClose} ✕
+          </button>
+        </div>
+        <p className="mt-3 text-[15px] leading-relaxed">{v(term.defZh, term.defEn)}</p>
+        <div className="mt-4 rounded-lg bg-[rgba(76,107,94,0.08)] p-3">
+          <div className="text-[11px] tracking-wider text-[var(--color-jade)]">{t.termRelation}</div>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--color-ink-soft)]">{v(term.relZh, term.relEn)}</p>
+        </div>
+        <p className="mt-3 text-xs text-[var(--color-ink-soft)]">{t.termSource}：{v(term.src, term.src)}</p>
+      </div>
+    </div>
+  )
+}
+
+function Reading({ data, t, lang, onTerm }) {
+  const analysis = useMemo(() => analyzeChart(data, lang), [data, lang])
+  const [reading, setReading] = useState(() => fallbackProse(analysis, lang))
+  useEffect(() => {
+    let alive = true
+    setReading(fallbackProse(analysis, lang))
+    generateReading(analysis, data, lang, callModel).then((r) => { if (alive) setReading(r.text) })
+    return () => { alive = false }
+  }, [analysis, data, lang])
+
+  const elName = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
+
+  return (
+    <div className="mt-9 border-t border-[rgba(33,29,24,0.1)] pt-7">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="font-zh text-lg font-semibold">{t.readingTitle}</h3>
+        <span className="text-[11px] text-[var(--color-ink-soft)]">{t.glossaryHint}</span>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <span>
+          <span className="text-[var(--color-ink-soft)]">{t.strengthLabel}：</span>
+          <TermLink id={STRENGTH_TERM[analysis.strength.tier]} onTerm={onTerm}>{analysis.strength.label}</TermLink>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <TermLink id="xiyong" onTerm={onTerm}>{t.favorLabel}</TermLink>
+          <span className="text-[var(--color-ink-soft)]">：</span>
+          {analysis.favor.elements.map((e) => (
+            <span key={e} className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: `${ELEMENT_META[e].color}1f`, color: ELEMENT_META[e].color }}>
+              {elName(e)}
+            </span>
+          ))}
+        </span>
+      </div>
+
+      <p className="mt-2 text-xs leading-relaxed text-[var(--color-ink-soft)]">{analysis.strength.reason}</p>
+
+      <div className="mt-4 space-y-3 text-[15px] leading-relaxed">
+        {reading.split('\n\n').map((para, i) => <p key={i}>{para}</p>)}
+      </div>
+
+      <p className="mt-5 text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.readingFoot}</p>
+
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        {['rizhu', 'wuxing', 'xiyong', 'bijie', 'yinshou', 'shishang', 'caixing', 'guansha', 'nayin'].map((id) => (
+          <button key={id} onClick={() => onTerm(id)} className="rounded-full border border-[rgba(33,29,24,0.15)] px-2.5 py-1 text-[11px] text-[var(--color-ink-soft)] transition hover:border-[var(--color-jade)] hover:text-[var(--color-jade)]">
+            {lang === 'en' ? TERM_BY_ID[id].en.split(' (')[0] : TERM_BY_ID[id].zh.split('（')[0]}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Result({ data, t, lang, onTerm }) {
   return (
     <section className="mx-auto max-w-3xl px-6 pb-16 md:px-12">
       <div className="rise rounded-2xl border border-[rgba(33,29,24,0.12)] bg-[rgba(255,255,255,0.3)] p-6 md:p-9">
@@ -192,6 +343,8 @@ function Result({ data, t, lang }) {
             <p className="text-[15px] leading-relaxed">{data.tone}</p>
           </div>
         </div>
+
+        <Reading data={data} t={t} lang={lang} onTerm={onTerm} />
       </div>
     </section>
   )
@@ -268,6 +421,7 @@ function Disclaimer({ t }) {
 export default function App() {
   const [lang, setLang] = useState('zh')
   const [input, setInput] = useState(null)
+  const [activeTerm, setActiveTerm] = useState(null)
   const t = STRINGS[lang]
 
   const data = useMemo(() => {
@@ -288,7 +442,7 @@ export default function App() {
       <Header lang={lang} setLang={setLang} t={t} onHome={goHome} />
       <Hero t={t} lang={lang} onStart={scrollToForm} />
       <BaziForm t={t} onSubmit={setInput} />
-      {data && <Result key={lang + JSON.stringify(input)} data={data} t={t} lang={lang} />}
+      {data && <Result key={lang + JSON.stringify(input)} data={data} t={t} lang={lang} onTerm={setActiveTerm} />}
       <Support t={t} />
       <Shop t={t} />
       <Disclaimer t={t} />
@@ -296,6 +450,7 @@ export default function App() {
         <p className="font-zh text-sm text-[var(--color-ink-soft)]">{t.footerTag}</p>
         <p className="mt-2 text-[11px] tracking-widest text-[var(--color-ink-soft)]">ONEMING · oneming.net</p>
       </footer>
+      {activeTerm && <TermModal id={activeTerm} lang={lang} t={t} onClose={() => setActiveTerm(null)} />}
     </div>
   )
 }
