@@ -127,7 +127,7 @@ function injectHome() {
 <p>常言道"一命二运三风水，四积阴德五读书"——命排在第一位。先把你天生这副牌排出来看看。</p>
 <p>想读懂命盘里的词？看 <a href="/term/">命理小词典</a>：${featured} 等。</p>
 </div>`
-  html = html.replace('<div id="root"></div>', `<div id="root">${block}</div>`)
+  html = html.replace('<div id="root"></div>', `<div id="root"><div id="seo-prerender" style="display:none" aria-hidden="true">${block}</div></div>`)
   writeFileSync(file, html, 'utf8')
 }
 
