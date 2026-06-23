@@ -74,6 +74,22 @@ const TIP_READY = true // Ko-fi 已绑定，按钮激活
 
 const STRENGTH_TERM = { weak: 'shenruo', balanced: 'zhonghe', strong: 'shenqiang' }
 
+// 命盘结果 → 静态百科页 的映射（用于"相关阅读"闭环）
+const DAYGAN_PAGE = {
+  甲: { id: 'jiamu', en: 'Jia Wood' }, 乙: { id: 'yimu', en: 'Yi Wood' },
+  丙: { id: 'binghuo', en: 'Bing Fire' }, 丁: { id: 'dinghuo', en: 'Ding Fire' },
+  戊: { id: 'wutu', en: 'Wu Earth' }, 己: { id: 'jitu', en: 'Ji Earth' },
+  庚: { id: 'gengjin', en: 'Geng Metal' }, 辛: { id: 'xinjin', en: 'Xin Metal' },
+  壬: { id: 'renshui', en: 'Ren Water' }, 癸: { id: 'guishui', en: 'Gui Water' },
+}
+const SHISHEN_PAGE = {
+  正官: { id: 'zhengguan', en: 'Direct Officer' }, 七杀: { id: 'qisha', en: 'Seven Killings' },
+  正印: { id: 'zhengyin', en: 'Direct Resource' }, 偏印: { id: 'pianyin', en: 'Indirect Resource' },
+  正财: { id: 'zhengcai', en: 'Direct Wealth' }, 偏财: { id: 'piancai', en: 'Indirect Wealth' },
+  食神: { id: 'shishen', en: 'Eating God' }, 伤官: { id: 'shangguan', en: 'Hurting Officer' },
+  比肩: { id: 'bijian', en: 'Friend' }, 劫财: { id: 'jiecai', en: 'Rob Wealth' },
+}
+
 // 从 URL 还原命盘：oneming.net/?d=1995-08-15&t=14:30&g=male
 function parseUrlSeed() {
   try {
@@ -561,6 +577,22 @@ function Reading({ data, t, lang, onTerm }) {
   const elName = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
   const [cardOpen, setCardOpen] = useState(false)
 
+  const related = useMemo(() => {
+    const out = []
+    const dg = DAYGAN_PAGE[data.dayGan]
+    if (dg) out.push({ href: `/term/${dg.id}/`, zh: `${data.dayGan}${ELEMENT_META[analysis.dayElement].zh}日主的性格特点`, en: `${dg.en} Day Master personality` })
+    const st = STRENGTH_TERM[analysis.strength.tier]
+    out.push({ href: `/term/${st}/`, zh: `${analysis.strength.label}是什么意思？`, en: `What does "${analysis.strength.label}" mean?` })
+    out.push({ href: '/term/xiyong/', zh: `喜用神是什么？为什么我喜${analysis.favor.elements.map((e) => ELEMENT_META[e].zh).join('')}`, en: 'What is the favorable element?' })
+    const seen = new Set()
+    for (const p of data.pillars) {
+      if (p.key === 'day') continue
+      const sp = SHISHEN_PAGE[p.shishen]
+      if (sp && !seen.has(sp.id)) { seen.add(sp.id); out.push({ href: `/term/${sp.id}/`, zh: `${p.shishen}是什么意思？`, en: `What is ${sp.en}?` }) }
+    }
+    return out
+  }, [data, analysis, lang])
+
   return (
     <div className="mt-9 border-t border-[rgba(33,29,24,0.1)] pt-7">
       <div className="flex items-baseline justify-between gap-2">
@@ -592,12 +624,17 @@ function Reading({ data, t, lang, onTerm }) {
 
       <p className="mt-5 text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.readingFoot}</p>
 
-      <div className="mt-4 flex flex-wrap gap-1.5">
-        {['rizhu', 'wuxing', 'xiyong', 'bijie', 'yinshou', 'shishang', 'caixing', 'guansha', 'nayin'].map((id) => (
-          <button key={id} onClick={() => onTerm(id)} className="rounded-full border border-[rgba(33,29,24,0.15)] px-2.5 py-1 text-[11px] text-[var(--color-ink-soft)] transition hover:border-[var(--color-jade)] hover:text-[var(--color-jade)]">
-            {lang === 'en' ? TERM_BY_ID[id].en.split(' (')[0] : TERM_BY_ID[id].zh.split('（')[0]}
-          </button>
-        ))}
+      <div className="mt-6">
+        <h4 className="font-zh text-sm font-semibold text-[var(--color-ink-soft)]">{t.relatedTitle}</h4>
+        <ul className="mt-2 space-y-1.5">
+          {related.map((r, i) => (
+            <li key={i}>
+              <a href={r.href} target="_blank" rel="noopener" className="text-sm text-[var(--color-jade)] underline decoration-dotted underline-offset-4 transition hover:opacity-75">
+                {(lang === 'en' ? r.en : r.zh)} →
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <button
@@ -758,7 +795,10 @@ export default function App() {
       <Disclaimer t={t} />
       <footer className="border-t border-[rgba(33,29,24,0.12)] px-6 py-8 text-center md:px-12">
         <p className="font-zh text-sm text-[var(--color-ink-soft)]">{t.footerTag}</p>
-        <p className="mt-2 text-[11px] tracking-widest text-[var(--color-ink-soft)]">ONEMING · oneming.net</p>
+        <p className="mt-2 text-[11px] tracking-widest text-[var(--color-ink-soft)]">
+          <a href="/term/" className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{lang === 'en' ? 'Glossary' : '命理小词典'}</a>
+          {' · '}ONEMING · oneming.net
+        </p>
       </footer>
       {activeTerm && <TermModal id={activeTerm} lang={lang} t={t} onClose={() => setActiveTerm(null)} />}
     </div>
