@@ -749,8 +749,20 @@ function Shop({ t }) {
 function Disclaimer({ t }) {
   return (
     <section className="mx-auto max-w-3xl px-6 py-12 md:px-12">
+      <div className="mb-8 rounded-2xl border border-[rgba(76,107,94,0.25)] bg-[rgba(76,107,94,0.06)] p-5 md:p-6">
+        <h3 className="font-zh text-base font-semibold text-[var(--color-jade)]">{t.trustTitle}</h3>
+        <p className="mt-2 text-sm leading-relaxed">{t.trustBody}</p>
+        <a href="/ai-notice/" className="mt-2 inline-block text-xs text-[var(--color-jade)] underline decoration-dotted underline-offset-4">{t.trustLink} →</a>
+      </div>
       <h3 className="font-zh mb-2 text-sm font-semibold tracking-wide text-[var(--color-ink-soft)]">{t.disclaimerTitle}</h3>
       <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.disclaimer}</p>
+      <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
+        <a href="/terms/" className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{t.footTerms}</a>
+        {' · '}
+        <a href="/privacy/" className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{t.footPrivacy}</a>
+        {' · '}
+        <a href="/ai-notice/" className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{t.footAi}</a>
+      </p>
     </section>
   )
 }
