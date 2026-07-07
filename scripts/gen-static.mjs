@@ -52,12 +52,69 @@ function head(title, desc, url) {
 <link rel="canonical" href="${url}">
 <meta property="og:type" content="article"><meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}">
+<meta property="og:image" content="${BASE}/share-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="${BASE}/share-cover.png">
+<meta name="theme-color" content="#ece5d6">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
 <style>${STYLE}</style></head><body><div class="wrap">
 <header><a class="seal" href="/">命</a><a href="/" style="color:inherit"><span class="brand">ONEMING<small>一 命</small></span></a></header>`
 }
-const FOOT = `<footer>一命二运三风水，四积阴德五读书 · <a href="/">oneming.net</a><br>传统文化 · 娱乐参考，非命定。</footer></div></body></html>`
+const FOOT = `<footer>一命二运三风水，四积阴德五读书 · <a href="/">oneming.net</a><br>传统文化 · 娱乐参考，非命定。<br><a href="/terms/">用户协议</a> · <a href="/privacy/">隐私说明</a> · <a href="/ai-notice/">AI 生成说明</a></footer></div></body></html>`
+
+// ——— 信任页（用户协议 / 隐私 / AI 说明）———
+const LEGAL = [
+  {
+    id: 'terms', title: '用户协议', desc: '一命 ONEMING 用户协议：服务性质、使用规范与免责说明。',
+    body: `
+<p class="def">欢迎使用一命（oneming.net）。使用本站即表示你已阅读并同意以下条款。</p>
+<h2 class="sec">服务性质</h2>
+<p>本站提供基于传统命理文化（八字/四柱）的排盘与性格倾向解读，属于<strong>传统文化与娱乐参考服务</strong>。所有内容仅供文化欣赏与自我反思，<strong>不构成任何预测、承诺或专业建议</strong>，不能替代医疗、法律、投资、心理等专业意见。</p>
+<h2 class="sec">使用规范</h2>
+<p>请勿将本站内容用于迷信宣传、恐吓他人、诈骗或任何违法用途；请勿以自动化手段批量抓取或滥用本站接口。未满 18 周岁的用户请在监护人指导下使用。</p>
+<h2 class="sec">免责说明</h2>
+<p>命盘计算基于公开的历法算法，解读基于公有古籍的传统框架（如《渊海子平》《滴天髓》），其准确性与适用性不作任何保证。你基于本站内容作出的任何决定，责任由你自行承担。</p>
+<h2 class="sec">变更与联系</h2>
+<p>本协议可能不定期更新，更新后在本页公示即生效。</p>`,
+  },
+  {
+    id: 'privacy', title: '隐私说明', desc: '一命 ONEMING 隐私说明：出生信息本地计算、不存储、不追踪。',
+    body: `
+<p class="def">我们把隐私当作产品设计的一部分，而不是一纸声明。</p>
+<h2 class="sec">出生信息：本地计算</h2>
+<p>你的出生日期、时间在<strong>你自己的浏览器里</strong>完成排盘计算。本站不要求注册，不建立用户档案，<strong>不在服务器上存储你的出生信息</strong>。</p>
+<h2 class="sec">AI 解读：脱敏、无状态</h2>
+<p>当生成 AI 文字解读时，发送给文本生成服务的仅是<strong>已脱敏的盘面要素</strong>（如干支、旺衰、喜用等），不包含姓名等身份信息；该请求为无状态处理，<strong>不落库、不保留</strong>。生成的文字会缓存在你自己的浏览器本地，便于下次直接查看。</p>
+<h2 class="sec">分享由你决定</h2>
+<p>"保存/分享命盘"生成的链接包含出生参数，是否分享、分享给谁，完全由你决定。命盘卡片默认为不含完整八字的"氛围卡"，含完整四柱的"完整卡"需要你主动选择。</p>
+<h2 class="sec">统计</h2>
+<p>本站托管于 Cloudflare，可能产生匿名的聚合访问统计（如访问量），不涉及你的出生信息。</p>`,
+  },
+  {
+    id: 'ai-notice', title: 'AI 生成说明', desc: '一命 ONEMING AI 生成说明：哪些内容由 AI 辅助生成，以及我们的约束方式。',
+    body: `
+<p class="def">诚实地说明：本站哪些内容与 AI 有关、我们怎么约束它。</p>
+<h2 class="sec">哪些是确定性计算</h2>
+<p>四柱排盘、五行统计、旺衰判定、喜用推导，均为<strong>确定性规则计算</strong>（基于公开历法与传统扶抑法），同样的输入永远得到同样的结果，与 AI 无关。</p>
+<h2 class="sec">哪些由 AI 辅助</h2>
+<p>命盘解读中的"文字表达"由 AI 模型基于上述计算结果润色生成。AI <strong>只负责措辞，不产生新的命理结论</strong>：它只能使用引擎给定的盘面事实，且被明确禁止输出运势预测、吉凶断言与改运暗示；输出还会经过独立的合规过滤，不合格则回退为固定文案。</p>
+<h2 class="sec">词条内容</h2>
+<p>命理小词典的词条基于公有古籍（《渊海子平》《滴天髓》《三命通会》等）的传统框架，以现代语言原创撰写，并标注出处。</p>
+<h2 class="sec">一句话</h2>
+<p>计算是规则的，措辞可能是 AI 的，红线是写死的：<strong>只谈性格倾向，不预测、不改运。</strong></p>`,
+  },
+]
+
+function legalPage(p) {
+  const url = `${BASE}/${p.id}/`
+  const title = `${p.title} - 一命 ONEMING`
+  return head(title, p.desc, url) + `
+<nav class="crumb"><a href="/">首页</a> / ${esc(p.title)}</nav>
+<h1>${esc(p.title)}</h1>
+${p.body}
+<a class="cta" href="/">返回首页 →</a>
+` + FOOT
+}
 
 function pageTitle(t) {
   if (t.kind === 'rizhu') return `${baseName(t.zh)}日主是什么性格？（${t.en}）- 一命 ONEMING`
@@ -132,7 +189,7 @@ function injectHome() {
 }
 
 function sitemap() {
-  const urls = [`${BASE}/`, `${BASE}/term/`, ...ALL.map((t) => `${BASE}/term/${t.id}/`)]
+  const urls = [`${BASE}/`, `${BASE}/term/`, ...ALL.map((t) => `${BASE}/term/${t.id}/`), ...LEGAL.map((p) => `${BASE}/${p.id}/`)]
   const body = urls.map((u) => `  <url><loc>${u}</loc><lastmod>${TODAY}</lastmod></url>`).join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
 }
@@ -145,6 +202,7 @@ function write(path, content) {
 
 for (const t of ALL) write(`term/${t.id}/index.html`, termPage(t))
 write('term/index.html', hubPage())
+for (const p of LEGAL) write(`${p.id}/index.html`, legalPage(p))
 write('sitemap.xml', sitemap())
 injectHome()
-console.log(`[gen-static] 生成 ${ALL.length} 个词条页 + 总览 + sitemap + 首页静态化`)
+console.log(`[gen-static] 生成 ${ALL.length} 个词条页 + 总览 + ${LEGAL.length} 个信任页 + sitemap + 首页静态化`)
