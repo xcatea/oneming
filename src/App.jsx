@@ -89,6 +89,12 @@ const SHISHEN_PAGE = {
   食神: { id: 'shishen', en: 'Eating God' }, 伤官: { id: 'shangguan', en: 'Hurting Officer' },
   比肩: { id: 'bijian', en: 'Friend' }, 劫财: { id: 'jiecai', en: 'Rob Wealth' },
 }
+// 十神名 → 应用内词条（TermModal 的五大类）
+const SHISHEN_MODAL = {
+  正官: 'guansha', 七杀: 'guansha', 正印: 'yinshou', 偏印: 'yinshou',
+  食神: 'shishang', 伤官: 'shishang', 正财: 'caixing', 偏财: 'caixing',
+  比肩: 'bijie', 劫财: 'bijie',
+}
 
 // 从 URL 还原命盘：oneming.net/?d=1995-08-15&t=14:30&g=male
 function parseUrlSeed() {
@@ -577,6 +583,24 @@ function Reading({ data, t, lang, onTerm }) {
   const elName = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
   const [cardOpen, setCardOpen] = useState(false)
 
+  // 本命盘涉及的术语（打开应用内 TermModal 底部抽屉）
+  const chartTerms = useMemo(() => {
+    const list = [
+      { label: lang === 'en' ? 'Day Master' : '日主', id: 'rizhu' },
+      { label: lang === 'en' ? 'Five Elements' : '五行', id: 'wuxing' },
+      { label: analysis.strength.label, id: STRENGTH_TERM[analysis.strength.tier] },
+      { label: lang === 'en' ? 'Favorable' : '喜用神', id: 'xiyong' },
+    ]
+    const seen = new Set()
+    for (const p of data.pillars) {
+      if (p.key === 'day') continue
+      const mid = SHISHEN_MODAL[p.shishen]
+      if (mid && !seen.has(p.shishen)) { seen.add(p.shishen); list.push({ label: lang === 'en' ? p.shishen : p.shishen, id: mid }) }
+    }
+    list.push({ label: lang === 'en' ? 'Na Yin' : '纳音', id: 'nayin' })
+    return list
+  }, [data, analysis, lang])
+
   const related = useMemo(() => {
     const out = []
     const dg = DAYGAN_PAGE[data.dayGan]
@@ -598,6 +622,23 @@ function Reading({ data, t, lang, onTerm }) {
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="font-zh text-lg font-semibold">{t.readingTitle}</h3>
         <span className="text-[11px] text-[var(--color-ink-soft)]">{t.glossaryHint}</span>
+      </div>
+
+      <div className="mt-3 rounded-xl border border-[rgba(76,107,94,0.22)] bg-[rgba(76,107,94,0.06)] px-3.5 py-2.5">
+        <span className="text-xs text-[var(--color-ink-soft)]">
+          {t.termsBarPrefix} <strong className="text-[var(--color-jade)]">{chartTerms.length}</strong> {t.termsBarSuffix}
+        </span>
+        <span className="mt-1.5 flex flex-wrap gap-1.5">
+          {chartTerms.map((c, i) => (
+            <button
+              key={i}
+              onClick={() => onTerm(c.id)}
+              className="rounded-full bg-[var(--color-paper)] px-2.5 py-1 text-xs text-[var(--color-jade)] shadow-sm transition hover:bg-[var(--color-jade)] hover:text-[var(--color-paper)]"
+            >
+              {c.label}
+            </button>
+          ))}
+        </span>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
