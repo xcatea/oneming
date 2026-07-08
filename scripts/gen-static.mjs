@@ -116,6 +116,43 @@ ${p.body}
 ` + FOOT
 }
 
+// ——— 母题页：一命二运三风水 ———
+function proverbPage() {
+  const url = `${BASE}/yiming-eryun-san-fengshui/`
+  const title = '一命二运三风水是什么意思？和八字命盘有什么关系 - 一命 ONEMING'
+  const desc = '"一命二运三风水，四积阴德五读书"逐句解释：一命指出生时间形成的八字命盘，二运指大运流年的阶段变化，三风水指环境影响，四五指后天的行为与修养。看懂这句话，就看懂了传统命理的整体框架。'
+  const ld = `<script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'Article',
+    headline: title, description: desc, inLanguage: 'zh-CN', mainEntityOfPage: url,
+    author: { '@type': 'Organization', name: '一命 ONEMING' },
+    publisher: { '@type': 'Organization', name: '一命 ONEMING' },
+  })}</script>`
+  return head(title, desc, url) + ld + `
+<nav class="crumb"><a href="/">首页</a> / 一命二运三风水</nav>
+<h1>一命二运三风水是什么意思？</h1>
+<div class="en">和八字命盘有什么关系</div>
+<p class="def">"一命二运三风水，四积阴德五读书"是流传很广的一句民间总结，常被认为化自明清命理著述的观念。它把影响一个人一生的因素，按传统的看法排了个序。逐句拆开看，其实是一套很完整的人生观框架——前一半讲"天生与环境"，后一半讲"后天与自己"。</p>
+
+<h2 class="sec">一命：出生时间形成的八字命盘</h2>
+<p>"命"指你出生那一刻的年、月、日、时，按干支历记下来，就是四组干支、八个字——即<a href="/term/bazi/">八字</a>，又称<a href="/term/sizhu/">四柱</a>。传统命理认为，这八个字构成一个人的"先天底盘"：<a href="/term/wuxing/">五行</a>的多寡、<a href="/term/rizhu/">日主</a>的强弱，勾勒出天生的性格质地与行事倾向。命排在第一位，说的是"先天这副牌"是一切的起点——但请注意，是起点，不是终点。</p>
+
+<h2 class="sec">二运：大运与流年，人生的阶段变化</h2>
+<p>"运"指大运与流年。同样一副牌，在不同阶段的"外部节奏"里，打法与体感并不一样——传统命理用十年一换的"大运"和逐年的"流年"来描述这种阶段感。俗话说"命好不如运好"，讲的就是静态的盘面之外，还有动态的时机。一命目前专注把"命"这一层（排盘与解读）做透，运的部分作为文化概念供你了解。</p>
+
+<h2 class="sec">三风水：环境对人的影响</h2>
+<p>"风水"讲的是环境：居所、方位、气候、你身边围绕的人与物。抛开玄学外衣，它的内核是朴素的——环境确实塑造人。传统排序把它放在命与运之后，意思是：环境有影响，但不如先天禀赋与时机来得根本。</p>
+
+<h2 class="sec">四积阴德、五读书：后天的行为与修养</h2>
+<p>这句常被忽略的后半段，恰恰是整句话的点睛：积阴德是你怎么待人处事，读书是你怎么提升自己。前三样多少带着"给定"的成分，后两样完全握在自己手里。古人把它们列进同一个序列，本身就在说：<strong>命不是全部，人的努力在这个框架里占有正式的位置。</strong></p>
+
+<h2 class="sec">这句话和你的命盘是什么关系</h2>
+<p>一命（oneming.net）取名就来自这句话的第一个词。我们的立场也和这句话的完整语义一致：排出你的八字命盘，解释<a href="/term/rizhu/">日主</a>、<a href="/term/xiyong/">喜用神</a>、<a href="/term/qisha/">七杀</a>这些术语，帮你看懂"天生这副牌"长什么样——但怎么打，是"四积阴德五读书"的事，在你自己。所以我们只谈性格倾向，不预测吉凶，不搞改运。</p>
+
+<a class="cta" href="/">输入生辰，先看懂你的"一命" →</a>
+<div class="more"><h2>相关词条</h2><a href="/term/bazi/">八字</a><a href="/term/sizhu/">四柱</a><a href="/term/rizhu/">日主</a><a href="/term/wuxing/">五行</a><a href="/term/xiyong/">喜用神</a><a href="/term/shenqiang/">身强</a><a href="/term/shenruo/">身弱</a></div>
+` + FOOT
+}
+
 function pageTitle(t) {
   if (t.kind === 'rizhu') return `${baseName(t.zh)}日主是什么性格？（${t.en}）- 一命 ONEMING`
   if (t.kind === 'shishen') return `${baseName(t.zh)}是什么意思？十神详解（${t.en}）- 一命 ONEMING`
@@ -179,9 +216,8 @@ function injectHome() {
     .map((id) => ALL.find((x) => x.id === id)).filter(Boolean)
     .map((x) => `<a href="/term/${x.id}/">${esc(baseName(x.zh))}</a>`).join(' · ')
   const block = `<div style="max-width:680px;margin:0 auto;padding:40px 20px;font-family:'Noto Serif SC',serif;color:#211d18;line-height:1.8">
-<h1>一命 ONEMING · 免费八字命盘</h1>
-<p>一命是一个免费、好看的八字工具：输入出生信息，本地排出你的四柱八字与五行命盘，并给出基于传统命理（扶抑法）的性格解读。算命永远免费，只供文化欣赏与自我参考，不预测、不改运。</p>
-<p>常言道"一命二运三风水，四积阴德五读书"——命排在第一位。先把你天生这副牌排出来看看。</p>
+<h1>一命二运三风水，免费排盘看懂你的八字命盘</h1>
+<p>输入出生时间，一命（oneming.net）在你的浏览器本地排出四柱八字、五行分布与十神关系，并解释命盘中出现的每一个专业术语——日主、旺衰、喜用神、正官七杀……让你从"<a href="/yiming-eryun-san-fengshui/">一命二运三风水</a>"开始，真正看懂自己的命盘。免费，不预测吉凶、不改运，只作传统文化与自我认知参考。</p>
 <p>想读懂命盘里的词？看 <a href="/term/">命理小词典</a>：${featured} 等。</p>
 </div>`
   html = html.replace('<div id="root"></div>', `<div id="root"><div id="seo-prerender" style="display:none" aria-hidden="true">${block}</div></div>`)
@@ -189,7 +225,7 @@ function injectHome() {
 }
 
 function sitemap() {
-  const urls = [`${BASE}/`, `${BASE}/term/`, ...ALL.map((t) => `${BASE}/term/${t.id}/`), ...LEGAL.map((p) => `${BASE}/${p.id}/`)]
+  const urls = [`${BASE}/`, `${BASE}/term/`, `${BASE}/yiming-eryun-san-fengshui/`, ...ALL.map((t) => `${BASE}/term/${t.id}/`), ...LEGAL.map((p) => `${BASE}/${p.id}/`)]
   const body = urls.map((u) => `  <url><loc>${u}</loc><lastmod>${TODAY}</lastmod></url>`).join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
 }
@@ -203,6 +239,7 @@ function write(path, content) {
 for (const t of ALL) write(`term/${t.id}/index.html`, termPage(t))
 write('term/index.html', hubPage())
 for (const p of LEGAL) write(`${p.id}/index.html`, legalPage(p))
+write('yiming-eryun-san-fengshui/index.html', proverbPage())
 write('sitemap.xml', sitemap())
 injectHome()
 console.log(`[gen-static] 生成 ${ALL.length} 个词条页 + 总览 + ${LEGAL.length} 个信任页 + sitemap + 首页静态化`)
