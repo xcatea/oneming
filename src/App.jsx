@@ -154,14 +154,12 @@ function Hero({ t, lang, onStart }) {
   return (
     <section className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-6 py-12 md:grid-cols-[1fr_auto] md:px-12 md:py-20">
       <div className="rise">
-        <h1 className="font-zh">
-          <span className="block text-5xl font-black leading-tight tracking-tight md:text-7xl">
-            {lang === 'zh' ? '一命' : 'One fate,'}
-            <span className="block text-[var(--color-jade)]">{lang === 'zh' ? '排在第一位' : 'dealt first.'}</span>
-          </span>
-          <span className="mt-5 block max-w-md text-lg font-medium leading-relaxed md:text-xl">
-            {t.heroSeo}
-          </span>
+        <div className="font-zh text-5xl font-black leading-tight tracking-tight md:text-7xl">
+          {lang === 'zh' ? '一命' : 'One fate,'}
+          <span className="block text-[var(--color-jade)]">{lang === 'zh' ? '排在第一位' : 'dealt first.'}</span>
+        </div>
+        <h1 className="font-zh mt-5 block max-w-md text-lg font-medium leading-relaxed md:text-xl">
+          {t.heroSeo}
         </h1>
         <p className="font-en mt-4 max-w-md text-base leading-relaxed text-[var(--color-ink-soft)]">
           {t.heroLead}
