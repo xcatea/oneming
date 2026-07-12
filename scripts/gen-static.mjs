@@ -8,7 +8,6 @@ import { SHISHEN, RIZHU } from './seo-data.mjs'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
 const BASE = 'https://oneming.net'
-const TODAY = new Date().toISOString().slice(0, 10)
 
 const CORE = TERMS.map((t) => ({ ...t, kind: 'term' }))
 const ALL = [...CORE, ...SHISHEN, ...RIZHU]
@@ -167,7 +166,15 @@ function jsonLd(t, url) {
     author: { '@type': 'Organization', name: '一命 ONEMING' },
     publisher: { '@type': 'Organization', name: '一命 ONEMING' },
   }
-  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`
+  const crumbs = {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '首页', item: `${BASE}/` },
+      { '@type': 'ListItem', position: 2, name: '命理小词典', item: `${BASE}/term/` },
+      { '@type': 'ListItem', position: 3, name: baseName(t.zh), item: url },
+    ],
+  }
+  return `<script type="application/ld+json">${JSON.stringify(data)}</script><script type="application/ld+json">${JSON.stringify(crumbs)}</script>`
 }
 
 function termPage(t) {
@@ -208,25 +215,20 @@ ${sec('十天干日主性格', RIZHU)}
 ` + FOOT
 }
 
-// 首页静态化：把 SEO 内容注入到 dist/index.html 的 #root 里（React 挂载时会替换，但原始 HTML 已含内容供爬虫读取）
+// 首页：注入 Organization/WebSite 结构化数据（合法的 head 数据，非隐藏正文）
 function injectHome() {
   const file = join(DIST, 'index.html')
   let html = readFileSync(file, 'utf8')
-  const featured = ['rizhu', 'wuxing', 'xiyong', 'shenruo', 'jiamu', 'binghuo', 'wutu', 'zhengguan', 'qisha']
-    .map((id) => ALL.find((x) => x.id === id)).filter(Boolean)
-    .map((x) => `<a href="/term/${x.id}/">${esc(baseName(x.zh))}</a>`).join(' · ')
-  const block = `<div style="max-width:680px;margin:0 auto;padding:40px 20px;font-family:'Noto Serif SC',serif;color:#211d18;line-height:1.8">
-<h1>一命二运三风水，免费排盘看懂你的八字命盘</h1>
-<p>输入出生时间，一命（oneming.net）在你的浏览器本地排出四柱八字、五行分布与十神关系，并解释命盘中出现的每一个专业术语——日主、旺衰、喜用神、正官七杀……让你从"<a href="/yiming-eryun-san-fengshui/">一命二运三风水</a>"开始，真正看懂自己的命盘。免费，不预测吉凶、不改运，只作传统文化与自我认知参考。</p>
-<p>想读懂命盘里的词？看 <a href="/term/">命理小词典</a>：${featured} 等。</p>
-</div>`
-  html = html.replace('<div id="root"></div>', `<div id="root"><div id="seo-prerender" style="display:none" aria-hidden="true">${block}</div></div>`)
+  const org = { '@context': 'https://schema.org', '@type': 'Organization', name: '一命 ONEMING', url: `${BASE}/`, logo: `${BASE}/share-cover.png`, sameAs: ['https://github.com/xcatea/oneming'] }
+  const site = { '@context': 'https://schema.org', '@type': 'WebSite', name: '一命 ONEMING', alternateName: 'oneming', url: `${BASE}/`, inLanguage: 'zh-CN', description: '免费八字排盘与命盘术语解释工具：四柱八字、五行分布、十神关系，并解释命盘中出现的每一个专业术语。' }
+  const ld = `<script type="application/ld+json">${JSON.stringify(org)}</script>\n<script type="application/ld+json">${JSON.stringify(site)}</script>`
+  html = html.replace('</head>', `${ld}\n</head>`)
   writeFileSync(file, html, 'utf8')
 }
 
 function sitemap() {
   const urls = [`${BASE}/`, `${BASE}/term/`, `${BASE}/yiming-eryun-san-fengshui/`, ...ALL.map((t) => `${BASE}/term/${t.id}/`), ...LEGAL.map((p) => `${BASE}/${p.id}/`)]
-  const body = urls.map((u) => `  <url><loc>${u}</loc><lastmod>${TODAY}</lastmod></url>`).join('\n')
+  const body = urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
 }
 
