@@ -12,7 +12,7 @@ const BASE = 'https://oneming.net'
 const CORE = TERMS.map((t) => ({ ...t, kind: 'term' }))
 const ALL = [...CORE, ...SHISHEN, ...RIZHU]
 
-const esc = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const esc = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 const baseName = (s) => s.split('（')[0].split('(')[0].trim()
 
 const STYLE = `
@@ -119,7 +119,7 @@ ${p.body}
 function proverbPage() {
   const url = `${BASE}/yiming-eryun-san-fengshui/`
   const title = '一命二运三风水是什么意思？和八字命盘有什么关系 - 一命 ONEMING'
-  const desc = '"一命二运三风水，四积阴德五读书"逐句解释：一命指出生时间形成的八字命盘，二运指大运流年的阶段变化，三风水指环境影响，四五指后天的行为与修养。看懂这句话，就看懂了传统命理的整体框架。'
+  const desc = '“一命二运三风水，四积阴德五读书”逐句解释：一命指出生时间形成的八字命盘，二运指大运流年的阶段变化，三风水指环境影响，四五指后天的行为与修养。看懂这句话，就看懂了传统命理的整体框架。'
   const ld = `<script type="application/ld+json">${JSON.stringify({
     '@context': 'https://schema.org', '@type': 'Article',
     headline: title, description: desc, inLanguage: 'zh-CN', mainEntityOfPage: url,
