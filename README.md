@@ -1,62 +1,37 @@
 # 一命 · ONEMING
 
-免费八字命盘网站。八字 / 五行排盘在**浏览器本地**完成，零后端、零数据库、不收集出生信息 —— 因此可直接托管在 Cloudflare Pages（免费、海外、无需备案）。算命永远免费，变现靠周边手串/文玩（链接外跳到独立店铺）。
+**oneming.net** 是一个免费八字排盘与**命盘术语解释**工具。
 
-## 技术栈
+输入出生时间后，系统在浏览器本地生成四柱八字、五行分布与十神关系，并解释命盘中出现的日主、旺衰、喜用神、正官、七杀、纳音等专业术语——从"一命二运三风水"开始，看懂自己的命盘。
 
-- **Vite + React** —— 纯静态产物，CF Pages 原生支持
-- **Tailwind CSS v4** —— 设计 token 在 `src/index.css`
-- **lunar-javascript**（6tail 开源）—— 八字/四柱/十神/纳音/生肖计算引擎
+## 核心定位
+
+- "一命二运三风水"的现代文化解释
+- 免费八字排盘（永远免费）
+- 命盘专业术语自动识别与解释
+- 出生信息在浏览器本地计算，不注册、不存储
+- **不预测吉凶，不售卖改运服务**——只谈性格倾向，供文化与自我认知参考
+
+## 技术架构
+
+- **前端**：Vite + React + Tailwind CSS v4，排盘计算基于 [lunar-javascript](https://github.com/6tail/lunar-javascript)，全部在浏览器本地完成
+- **AI 文笔层**：命盘解读的文字表达由 DeepSeek 通过 Cloudflare Pages Function（`functions/api/reading.js`）代理生成；服务端构建受约束提示词，只允许改写引擎给定的盘面事实，禁止预测与改运措辞，输出经合规过滤，失败回退为确定性文案。请求无状态，不存储出生信息
+- **SEO 静态层**：构建时由 `scripts/gen-static.mjs` 生成词典页（`/term/*`）、专题页、信任页、404 与 sitemap
+- **部署**：Cloudflare Pages，`npm run build` = `vite build && node scripts/gen-static.mjs`
 
 ## 目录
 
 ```
-src/
-  bazi.js      八字引擎：封装 lunar-javascript，输出命盘 + 五行统计 + 性格基调文案（中英）
-  strings.js   全部中英文案，改文案只动这里
-  App.jsx      页面：竖排谚语 Hero / 出生表单 / 四柱命盘 / 五行分布 / 周边引流 / 免责声明
-  index.css    设计 token（宣纸 / 墨 / 青瓷 / 朱砂）+ 竖排谚语样式
-public/
-  _redirects   SPA 回退（之后加路由时用得上）
-  robots.txt
+src/            React 应用（排盘、解读、词条抽屉、卡片）
+  bazi.js       排盘引擎（四柱/五行/纳音）
+  analyze.js    解读引擎第①层：旺衰/喜用/性格（确定性规则）
+  reading.js    解读引擎第②层：AI 文笔（模型无关，含合规过滤与兜底）
+  terms.js      应用内词条（18 条）
+functions/      Cloudflare Pages Functions（DeepSeek 代理）
+scripts/        构建期静态页生成（词条/专题/信任页/sitemap）
+public/         静态资源（robots.txt / 404.html / 分享封面）
 ```
 
-## 本地运行
+## 内容与合规口径
 
-```bash
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # 产物在 dist/
-```
-
-## 部署到 Cloudflare Pages
-
-1. 把这个目录推到 GitHub（`node_modules`、`dist` 已在 .gitignore）。
-2. Cloudflare 控制台 → Workers & Pages → 新建 → 连接你的 GitHub 仓库。
-3. 构建设置：
-   - Framework preset：`Vite`
-   - Build command：`npm run build`
-   - Build output directory：`dist`
-4. 绑定域名 `oneming.net`（Cloudflare 自带 DNS，几分钟生效，HTTPS 自动）。
-
-> 你 paypa.cc 那套 CF Pages 流程一样，直接套用即可。
-
-## 上线前要改的地方
-
-- **`src/App.jsx` 顶部的 `SHOP_URL`** —— 换成你的店铺/独立站/TikTok 落地页地址（现在是占位符）。
-- 字体走 Google Fonts CDN，国内访问偏慢；要更快可把 Noto Serif SC / Spectral 自托管，或国内站点换国内字体 CDN。
-
-## 合规备注（重要）
-
-设计上已经按"安全模式"来做，**保持这几条不要改**：
-
-- 解读只写**性格倾向 / 节奏参考**，不写宿命断言、不恐吓灾祸；
-- 周边文案当**文玩/饰品**卖，不能加"开光/转运/招财/辟邪/改运"任何功效词；
-- 全站保留**免责声明**与"传统文化·娱乐参考"标识；
-- 算命**免费**、不对排盘或"化解改运"收费。
-
-## 后续可扩展
-
-- 紫微斗数 / 塔罗作为新模块（`src/` 下并列加文件，路由用 `_redirects` 已留好）；
-- 解读文案可接 AI（你的 3070 + Ollama，或 API）做个性化生成，但产出同样要走上面的合规口径；
-- `lunar-javascript` 体积较大（打包后 gzip ~170KB），日后可改成路由级懒加载减小首屏。
+词条与解读框架源出公有古籍（《渊海子平》《滴天髓》《三命通会》等），以现代语言原创撰写并标注出处。全站红线：**只解释、只谈性格倾向，不预测吉凶、不恐吓、不改运、不带货开光。** 详见站内 [用户协议](https://oneming.net/terms/) · [隐私说明](https://oneming.net/privacy/) · [AI 生成说明](https://oneming.net/ai-notice/)。
