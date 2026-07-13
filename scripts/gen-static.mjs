@@ -4,6 +4,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { TERMS } from '../src/terms.js'
 import { SHISHEN, RIZHU } from './seo-data.mjs'
+import { LONGFORM, GUIDES } from './seo-content.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
@@ -12,7 +13,13 @@ const BASE = 'https://oneming.net'
 const CORE = TERMS.map((t) => ({ ...t, kind: 'term' }))
 const ALL = [...CORE, ...SHISHEN, ...RIZHU]
 
-const esc = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+const esc = (s = '') =>
+  String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 const baseName = (s) => s.split('（')[0].split('(')[0].trim()
 
 const STYLE = `
@@ -40,6 +47,24 @@ h2.sec{font-size:20px;margin:32px 0 10px;border-bottom:1px solid rgba(33,29,24,.
 .ensec{margin-top:28px;padding-top:18px;border-top:1px solid rgba(33,29,24,.12);color:var(--soft);font-size:14px}
 ul.list{list-style:none;padding:0}
 ul.list li{margin:14px 0}
+.toc{margin:22px 0;padding:16px 18px;background:rgba(255,255,255,.28);border:1px solid rgba(33,29,24,.09);border-radius:12px}
+.toc strong{display:block;margin-bottom:6px;font-size:14px}
+.toc a{display:block;padding:3px 0;font-size:14px}
+.article p{margin:10px 0}
+.article strong{font-weight:700}
+.faq{margin-top:32px}
+.faq-item{padding:15px 0;border-bottom:1px solid rgba(33,29,24,.12)}
+.faq-item h3{font-size:17px;margin:0 0 6px}
+.faq-item p{margin:0;color:var(--soft)}
+.sources{margin-top:28px;padding:16px 18px;border-left:3px solid var(--jade);background:rgba(76,107,94,.06)}
+.sources h2{font-size:15px;margin:0 0 8px}
+.sources ul{margin:0;padding-left:20px}
+.table-wrap{overflow-x:auto;margin:18px 0;border:1px solid rgba(33,29,24,.12);border-radius:12px;background:rgba(255,255,255,.22)}
+table{width:100%;border-collapse:collapse;min-width:620px;font-size:14px}
+th,td{padding:11px 12px;text-align:left;border-bottom:1px solid rgba(33,29,24,.10);vertical-align:top}
+th{background:rgba(76,107,94,.08);font-weight:700}
+tr:last-child td{border-bottom:0}
+.kicker{color:var(--soft);font-size:16px;margin-bottom:18px}
 footer{margin-top:40px;font-size:12px;color:var(--soft);text-align:center}
 `
 
@@ -119,7 +144,7 @@ ${p.body}
 function proverbPage() {
   const url = `${BASE}/yiming-eryun-san-fengshui/`
   const title = '一命二运三风水是什么意思？和八字命盘有什么关系 - 一命 ONEMING'
-  const desc = '“一命二运三风水，四积阴德五读书”逐句解释：一命指出生时间形成的八字命盘，二运指大运流年的阶段变化，三风水指环境影响，四五指后天的行为与修养。看懂这句话，就看懂了传统命理的整体框架。'
+  const desc = '"一命二运三风水，四积阴德五读书"逐句解释：一命指出生时间形成的八字命盘，二运指大运流年的阶段变化，三风水指环境影响，四五指后天的行为与修养。看懂这句话，就看懂了传统命理的整体框架。'
   const ld = `<script type="application/ld+json">${JSON.stringify({
     '@context': 'https://schema.org', '@type': 'Article',
     headline: title, description: desc, inLanguage: 'zh-CN', mainEntityOfPage: url,
@@ -158,42 +183,124 @@ function pageTitle(t) {
   return `${baseName(t.zh)}是什么意思？（${t.en}）- 一命 ONEMING`
 }
 
-function jsonLd(t, url) {
+function articleJsonLd({ title, description, url, updatedAt }) {
   const data = {
     '@context': 'https://schema.org', '@type': 'Article',
-    headline: pageTitle(t), description: t.defZh.slice(0, 110),
+    headline: title, description,
     inLanguage: 'zh-CN', mainEntityOfPage: url,
     author: { '@type': 'Organization', name: '一命 ONEMING' },
     publisher: { '@type': 'Organization', name: '一命 ONEMING' },
   }
-  const crumbs = {
-    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: '首页', item: `${BASE}/` },
-      { '@type': 'ListItem', position: 2, name: '命理小词典', item: `${BASE}/term/` },
-      { '@type': 'ListItem', position: 3, name: baseName(t.zh), item: url },
-    ],
+  if (updatedAt) {
+    data.datePublished = updatedAt
+    data.dateModified = updatedAt
   }
-  return `<script type="application/ld+json">${JSON.stringify(data)}</script><script type="application/ld+json">${JSON.stringify(crumbs)}</script>`
+  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`
+}
+
+function breadcrumbJsonLd(items) {
+  const data = {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.item,
+    })),
+  }
+  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`
+}
+
+function renderLongform(content) {
+  const toc = content.sections.map((section) =>
+    `<a href="#${esc(section.id)}">${esc(section.title)}</a>`
+  ).join('')
+
+  const sections = content.sections.map((section) => `
+<section class="article">
+  <h2 class="sec" id="${esc(section.id)}">${esc(section.title)}</h2>
+  ${section.body}
+</section>`).join('')
+
+  const faqs = (content.faqs || []).map((faq) => `
+<div class="faq-item">
+  <h3>${esc(faq.question)}</h3>
+  <p>${faq.answer}</p>
+</div>`).join('')
+
+  const sources = (content.sources || []).map((source) => `<li>${esc(source)}</li>`).join('')
+
+  return `
+<p class="def">${esc(content.summary)}</p>
+<nav class="toc" aria-label="文章目录"><strong>本文目录</strong>${toc}</nav>
+${sections}
+<a class="cta" href="/">免费排盘，查看我的命盘术语 →</a>
+${faqs ? `<section class="faq"><h2 class="sec">常见问题</h2>${faqs}</section>` : ''}
+${sources ? `<aside class="sources"><h2>参考与出处</h2><ul>${sources}</ul><p class="src">以上为传统文化资料的现代整理，不构成预测或现实决策建议。</p></aside>` : ''}
+`
 }
 
 function termPage(t) {
   const url = `${BASE}/term/${t.id}/`
-  const title = pageTitle(t)
-  const desc = t.defZh.slice(0, 80)
-  const related = ALL.filter((x) => x.id !== t.id && (x.kind === t.kind || x.kind === 'term')).slice(0, 24)
+  const content = LONGFORM[t.id]
+  const title = content?.title || pageTitle(t)
+  const desc = content?.description || t.defZh.slice(0, 80)
+  const relatedIds = content?.related || []
+  const related = relatedIds.length
+    ? relatedIds.map((id) => ALL.find((x) => x.id === id)).filter(Boolean)
+    : ALL.filter((x) => x.id !== t.id && (x.kind === t.kind || x.kind === 'term')).slice(0, 24)
   const moreLinks = related.map((x) => `<a href="/term/${x.id}/">${esc(baseName(x.zh))}</a>`).join('')
-  const h1 = t.kind === 'rizhu' ? `${esc(baseName(t.zh))}日主` : esc(baseName(t.zh))
-  return head(title, desc, url) + jsonLd(t, url) + `
-<nav class="crumb"><a href="/">首页</a> / <a href="/term/">命理小词典</a> / ${esc(baseName(t.zh))}</nav>
-<h1>${h1}</h1>
-<div class="en">${esc(t.en)}</div>
+  const h1 = content?.h1 || (t.kind === 'rizhu' ? `${esc(baseName(t.zh))}日主` : esc(baseName(t.zh)))
+  const ld = articleJsonLd({
+    title,
+    description: desc,
+    url,
+    updatedAt: content?.updatedAt,
+  }) + breadcrumbJsonLd([
+    { name: '首页', item: `${BASE}/` },
+    { name: '命理小词典', item: `${BASE}/term/` },
+    { name: baseName(t.zh), item: url },
+  ])
+
+  const main = content ? renderLongform(content) : `
 <p class="def">${esc(t.defZh)}</p>
 <div class="box"><div class="lab">它和别的怎么互动</div>${esc(t.relZh)}</div>
 <p class="src">出处：${esc(t.src)}（公有古籍）</p>
-<a class="cta" href="/">用一命免费排你的八字 →</a>
+<a class="cta" href="/">用一命免费排你的八字 →</a>`
+
+  return head(title, desc, url) + ld + `
+<nav class="crumb"><a href="/">首页</a> / <a href="/term/">命理小词典</a> / ${esc(baseName(t.zh))}</nav>
+<h1>${h1}</h1>
+<div class="en">${esc(t.en)}</div>
+${main}
 <div class="ensec"><strong>${esc(t.en)}</strong> — ${esc(t.defEn)} <em>${esc(t.relEn)}</em></div>
 <div class="more"><h2>相关词条</h2>${moreLinks}</div>
+` + FOOT
+}
+
+function guidePage(g) {
+  const url = `${BASE}${g.path}`
+  const ld = articleJsonLd({
+    title: g.title,
+    description: g.description,
+    url,
+    updatedAt: g.updatedAt,
+  }) + breadcrumbJsonLd([
+    { name: '首页', item: `${BASE}/` },
+    { name: '命理小词典', item: `${BASE}/term/` },
+    { name: g.h1.replace(/[？?]$/, ''), item: url },
+  ])
+
+  const related = (g.related || []).map((item) =>
+    `<a href="${item.href}">${esc(item.label)}</a>`
+  ).join('')
+
+  return head(g.title, g.description, url) + ld + `
+<nav class="crumb"><a href="/">首页</a> / <a href="/term/">命理小词典</a> / ${esc(g.h1.replace(/[？?]$/, ''))}</nav>
+<h1>${esc(g.h1)}</h1>
+<div class="kicker">${esc(g.kicker || '')}</div>
+${renderLongform(g)}
+<div class="more"><h2>十神词条</h2>${related}</div>
 ` + FOOT
 }
 
@@ -209,6 +316,8 @@ function hubPage() {
 <div class="en">八字术语 · 十神详解 · 日主性格 · 取自公有古籍</div>
 <p class="def">把命盘里会遇到的词，一条条用大白话讲清楚——是什么、它和别的怎么互动、出处在哪。只解释、谈性格倾向，不预测、不改运。</p>
 <a class="cta" href="/">用一命免费排你的八字 →</a>
+<h2 class="sec">深度指南</h2>
+<ul class="list">${GUIDES.map((g) => `<li><a href="${g.path}" style="font-size:18px;font-weight:600">${esc(g.h1.replace(/[？?]$/, ''))}</a><br><span style="color:var(--soft);font-size:14px">${esc(g.description.slice(0, 62))}…</span></li>`).join('')}</ul>
 ${sec('基础术语', CORE)}
 ${sec('十神详解', SHISHEN)}
 ${sec('十天干日主性格', RIZHU)}
@@ -227,7 +336,7 @@ function injectHome() {
 }
 
 function sitemap() {
-  const urls = [`${BASE}/`, `${BASE}/term/`, `${BASE}/yiming-eryun-san-fengshui/`, ...ALL.map((t) => `${BASE}/term/${t.id}/`), ...LEGAL.map((p) => `${BASE}/${p.id}/`)]
+  const urls = [`${BASE}/`, `${BASE}/term/`, `${BASE}/yiming-eryun-san-fengshui/`, ...ALL.map((t) => `${BASE}/term/${t.id}/`), ...GUIDES.map((g) => `${BASE}${g.path}`), ...LEGAL.map((p) => `${BASE}/${p.id}/`)]
   const body = urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
 }
@@ -239,9 +348,10 @@ function write(path, content) {
 }
 
 for (const t of ALL) write(`term/${t.id}/index.html`, termPage(t))
+for (const g of GUIDES) write(`${g.path.replace(/^\//, '')}index.html`, guidePage(g))
 write('term/index.html', hubPage())
 for (const p of LEGAL) write(`${p.id}/index.html`, legalPage(p))
 write('yiming-eryun-san-fengshui/index.html', proverbPage())
 write('sitemap.xml', sitemap())
 injectHome()
-console.log(`[gen-static] 生成 ${ALL.length} 个词条页 + 总览 + ${LEGAL.length} 个信任页 + sitemap + 首页静态化`)
+console.log(`[gen-static] 生成 ${ALL.length} 个词条页 + ${GUIDES.length} 个深度指南 + 总览 + ${LEGAL.length} 个信任页 + sitemap + 首页静态化`)
