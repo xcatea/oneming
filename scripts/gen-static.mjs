@@ -5,86 +5,15 @@ import { fileURLToPath } from 'node:url'
 import { TERMS } from '../src/terms.js'
 import { SHISHEN, RIZHU } from './seo-data.mjs'
 import { LONGFORM, GUIDES } from './seo-content.mjs'
+import { BASE, CFG, esc, baseName, head, foot, articleLd, breadcrumbLd, analyticsTags } from './page-kit.mjs'
+import { buildGrowth, LEGAL_EN } from './gen-growth.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
-const BASE = 'https://oneming.net'
 
 const CORE = TERMS.map((t) => ({ ...t, kind: 'term' }))
 const ALL = [...CORE, ...SHISHEN, ...RIZHU]
-
-const esc = (s = '') =>
-  String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-const baseName = (s) => s.split('（')[0].split('(')[0].trim()
-
-const STYLE = `
-:root{--paper:#ece5d6;--ink:#211d18;--soft:#5a5246;--jade:#4c6b5e;--seal:#9e342a}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Serif SC",Georgia,serif;line-height:1.75;-webkit-font-smoothing:antialiased}
-.wrap{max-width:720px;margin:0 auto;padding:28px 20px 60px}
-a{color:var(--jade);text-decoration:none}
-header{display:flex;align-items:center;gap:10px;padding-bottom:18px;border-bottom:1px solid rgba(33,29,24,.12);margin-bottom:24px}
-.seal{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:7px;background:var(--seal);color:#f3ece1;font-weight:700;font-size:20px}
-.brand{font-weight:700;font-size:18px;letter-spacing:.04em}
-.brand small{display:block;font-size:10px;letter-spacing:.3em;color:var(--soft);font-weight:400}
-.crumb{font-size:13px;color:var(--soft);margin-bottom:14px}
-h1{font-size:34px;margin:.2em 0 .1em}
-h2.sec{font-size:20px;margin:32px 0 10px;border-bottom:1px solid rgba(33,29,24,.12);padding-bottom:6px}
-.en{color:var(--soft);font-size:16px;margin-bottom:18px}
-.def{font-size:17px;margin:18px 0}
-.box{background:rgba(76,107,94,.08);border-radius:12px;padding:16px 18px;margin:18px 0}
-.box .lab{font-size:12px;letter-spacing:.2em;color:var(--jade);margin-bottom:6px}
-.src{font-size:13px;color:var(--soft)}
-.cta{display:inline-block;margin:22px 0;background:var(--ink);color:var(--paper);padding:12px 26px;border-radius:999px;font-size:15px}
-.more{margin-top:32px;padding-top:20px;border-top:1px solid rgba(33,29,24,.12)}
-.more h2{font-size:15px;color:var(--soft);font-weight:600;letter-spacing:.05em}
-.more a{display:inline-block;margin:4px 10px 4px 0;font-size:14px}
-.ensec{margin-top:28px;padding-top:18px;border-top:1px solid rgba(33,29,24,.12);color:var(--soft);font-size:14px}
-ul.list{list-style:none;padding:0}
-ul.list li{margin:14px 0}
-.toc{margin:22px 0;padding:16px 18px;background:rgba(255,255,255,.28);border:1px solid rgba(33,29,24,.09);border-radius:12px}
-.toc strong{display:block;margin-bottom:6px;font-size:14px}
-.toc a{display:block;padding:3px 0;font-size:14px}
-.article p{margin:10px 0}
-.article strong{font-weight:700}
-.faq{margin-top:32px}
-.faq-item{padding:15px 0;border-bottom:1px solid rgba(33,29,24,.12)}
-.faq-item h3{font-size:17px;margin:0 0 6px}
-.faq-item p{margin:0;color:var(--soft)}
-.sources{margin-top:28px;padding:16px 18px;border-left:3px solid var(--jade);background:rgba(76,107,94,.06)}
-.sources h2{font-size:15px;margin:0 0 8px}
-.sources ul{margin:0;padding-left:20px}
-.table-wrap{overflow-x:auto;margin:18px 0;border:1px solid rgba(33,29,24,.12);border-radius:12px;background:rgba(255,255,255,.22)}
-table{width:100%;border-collapse:collapse;min-width:620px;font-size:14px}
-th,td{padding:11px 12px;text-align:left;border-bottom:1px solid rgba(33,29,24,.10);vertical-align:top}
-th{background:rgba(76,107,94,.08);font-weight:700}
-tr:last-child td{border-bottom:0}
-.kicker{color:var(--soft);font-size:16px;margin-bottom:18px}
-footer{margin-top:40px;font-size:12px;color:var(--soft);text-align:center}
-`
-
-function head(title, desc, url) {
-  return `<!doctype html><html lang="zh-CN"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)}</title>
-<meta name="description" content="${esc(desc)}">
-<link rel="canonical" href="${url}">
-<meta property="og:type" content="article"><meta property="og:title" content="${esc(title)}">
-<meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}">
-<meta property="og:image" content="${BASE}/share-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="${BASE}/share-cover.png">
-<meta name="theme-color" content="#ece5d6">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
-<style>${STYLE}</style></head><body><div class="wrap">
-<header><a class="seal" href="/">命</a><a href="/" style="color:inherit"><span class="brand">ONEMING<small>一 命</small></span></a></header>`
-}
-const FOOT = `<footer>一命二运三风水，四积阴德五读书 · <a href="/">oneming.net</a><br>传统文化 · 娱乐参考，非命定。<br><a href="/terms/">用户协议</a> · <a href="/privacy/">隐私说明</a> · <a href="/ai-notice/">AI 生成说明</a></footer></div></body></html>`
+const FOOT = foot('zh')
 
 // ——— 信任页（用户协议 / 隐私 / AI 说明）———
 const LEGAL = [
@@ -111,8 +40,8 @@ const LEGAL = [
 <p>当生成 AI 文字解读时，发送给文本生成服务的仅是<strong>已脱敏的盘面要素</strong>（如干支、旺衰、喜用等），不包含姓名等身份信息；该请求为无状态处理，<strong>不落库、不保留</strong>。生成的文字会缓存在你自己的浏览器本地，便于下次直接查看。</p>
 <h2 class="sec">分享由你决定</h2>
 <p>"保存/分享命盘"生成的链接包含出生参数，是否分享、分享给谁，完全由你决定。命盘卡片默认为不含完整八字的"氛围卡"，含完整四柱的"完整卡"需要你主动选择。</p>
-<h2 class="sec">统计</h2>
-<p>本站托管于 Cloudflare，可能产生匿名的聚合访问统计（如访问量），不涉及你的出生信息。</p>`,
+<h2 class="sec">统计、Cookie 与广告</h2>
+<p>本站托管于 Cloudflare，可能产生匿名的聚合访问统计（如访问量），不涉及你的出生信息。${CFG.ga4Id ? '我们使用 Google Analytics 统计页面访问和按钮点击（只记录事件名称，不记录出生日期或时间），它会使用 Cookie。' : ''}${CFG.adsenseClient ? '部分知识页面展示 Google AdSense 广告。Google 等第三方供应商会使用 Cookie，根据你过去访问本站或其他网站的情况投放广告；你可以在 <a href="https://adssettings.google.com">Google 广告设置</a>中关闭个性化广告。排盘工具页面不展示广告。' : ''}</p>`,
   },
   {
     id: 'ai-notice', title: 'AI 生成说明', desc: '一命 ONEMING AI 生成说明：哪些内容由 AI 辅助生成，以及我们的约束方式。',
@@ -132,7 +61,7 @@ const LEGAL = [
 function legalPage(p) {
   const url = `${BASE}/${p.id}/`
   const title = `${p.title} - 一命 ONEMING`
-  return head(title, p.desc, url) + `
+  return head(title, p.desc, url, { alt: { zh: url, en: `${BASE}/en/${p.id}/` } }) + `
 <nav class="crumb"><a href="/">首页</a> / ${esc(p.title)}</nav>
 <h1>${esc(p.title)}</h1>
 ${p.body}
@@ -145,13 +74,8 @@ function proverbPage() {
   const url = `${BASE}/yiming-eryun-san-fengshui/`
   const title = '一命二运三风水是什么意思？和八字命盘有什么关系 - 一命 ONEMING'
   const desc = '"一命二运三风水，四积阴德五读书"逐句解释：一命指出生时间形成的八字命盘，二运指大运流年的阶段变化，三风水指环境影响，四五指后天的行为与修养。看懂这句话，就看懂了传统命理的整体框架。'
-  const ld = `<script type="application/ld+json">${JSON.stringify({
-    '@context': 'https://schema.org', '@type': 'Article',
-    headline: title, description: desc, inLanguage: 'zh-CN', mainEntityOfPage: url,
-    author: { '@type': 'Organization', name: '一命 ONEMING' },
-    publisher: { '@type': 'Organization', name: '一命 ONEMING' },
-  })}</script>`
-  return head(title, desc, url) + ld + `
+  const ld = articleLd({ title, description: desc, url })
+  return head(title, desc, url, { ads: true }) + ld + `
 <nav class="crumb"><a href="/">首页</a> / 一命二运三风水</nav>
 <h1>一命二运三风水是什么意思？</h1>
 <div class="en">和八字命盘有什么关系</div>
@@ -181,34 +105,6 @@ function pageTitle(t) {
   if (t.kind === 'rizhu') return `${baseName(t.zh)}日主是什么性格？（${t.en}）- 一命 ONEMING`
   if (t.kind === 'shishen') return `${baseName(t.zh)}是什么意思？十神详解（${t.en}）- 一命 ONEMING`
   return `${baseName(t.zh)}是什么意思？（${t.en}）- 一命 ONEMING`
-}
-
-function articleJsonLd({ title, description, url, updatedAt }) {
-  const data = {
-    '@context': 'https://schema.org', '@type': 'Article',
-    headline: title, description,
-    inLanguage: 'zh-CN', mainEntityOfPage: url,
-    author: { '@type': 'Organization', name: '一命 ONEMING' },
-    publisher: { '@type': 'Organization', name: '一命 ONEMING' },
-  }
-  if (updatedAt) {
-    data.datePublished = updatedAt
-    data.dateModified = updatedAt
-  }
-  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`
-}
-
-function breadcrumbJsonLd(items) {
-  const data = {
-    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
-    itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      item: item.item,
-    })),
-  }
-  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`
 }
 
 function renderLongform(content) {
@@ -251,12 +147,12 @@ function termPage(t) {
     : ALL.filter((x) => x.id !== t.id && (x.kind === t.kind || x.kind === 'term')).slice(0, 24)
   const moreLinks = related.map((x) => `<a href="/term/${x.id}/">${esc(baseName(x.zh))}</a>`).join('')
   const h1 = content?.h1 || (t.kind === 'rizhu' ? `${esc(baseName(t.zh))}日主` : esc(baseName(t.zh)))
-  const ld = articleJsonLd({
+  const ld = articleLd({
     title,
     description: desc,
     url,
     updatedAt: content?.updatedAt,
-  }) + breadcrumbJsonLd([
+  }) + breadcrumbLd([
     { name: '首页', item: `${BASE}/` },
     { name: '命理小词典', item: `${BASE}/term/` },
     { name: baseName(t.zh), item: url },
@@ -268,7 +164,7 @@ function termPage(t) {
 <p class="src">出处：${esc(t.src)}（公有古籍）</p>
 <a class="cta" href="/">用一命免费排你的八字 →</a>`
 
-  return head(title, desc, url) + ld + `
+  return head(title, desc, url, { ads: true, alt: { zh: url, en: `${BASE}/en/term/${t.id}/` } }) + ld + `
 <nav class="crumb"><a href="/">首页</a> / <a href="/term/">命理小词典</a> / ${esc(baseName(t.zh))}</nav>
 <h1>${h1}</h1>
 <div class="en">${esc(t.en)}</div>
@@ -280,12 +176,12 @@ ${main}
 
 function guidePage(g) {
   const url = `${BASE}${g.path}`
-  const ld = articleJsonLd({
+  const ld = articleLd({
     title: g.title,
     description: g.description,
     url,
     updatedAt: g.updatedAt,
-  }) + breadcrumbJsonLd([
+  }) + breadcrumbLd([
     { name: '首页', item: `${BASE}/` },
     { name: '命理小词典', item: `${BASE}/term/` },
     { name: g.h1.replace(/[？?]$/, ''), item: url },
@@ -295,7 +191,7 @@ function guidePage(g) {
     `<a href="${item.href}">${esc(item.label)}</a>`
   ).join('')
 
-  return head(g.title, g.description, url) + ld + `
+  return head(g.title, g.description, url, { ads: true }) + ld + `
 <nav class="crumb"><a href="/">首页</a> / <a href="/term/">命理小词典</a> / ${esc(g.h1.replace(/[？?]$/, ''))}</nav>
 <h1>${esc(g.h1)}</h1>
 <div class="kicker">${esc(g.kicker || '')}</div>
@@ -310,7 +206,7 @@ function hubPage() {
   const desc = '日主、十神、五行、旺衰、喜用神，十天干日主性格、正官七杀正印等十神详解——通俗、有源有据，免费，不预测、不改运。'
   const sec = (name, arr) => `<h2 class="sec">${name}</h2><ul class="list">` +
     arr.map((t) => `<li><a href="/term/${t.id}/" style="font-size:18px;font-weight:600">${esc(baseName(t.zh))}</a> <span style="color:var(--soft)">${esc(t.en)}</span><br><span style="color:var(--soft);font-size:14px">${esc(t.defZh.slice(0, 44))}…</span></li>`).join('') + '</ul>'
-  return head(title, desc, url) + `
+  return head(title, desc, url, { ads: true, alt: { zh: url, en: `${BASE}/en/term/` } }) + `
 <nav class="crumb"><a href="/">首页</a> / 命理小词典</nav>
 <h1>命理小词典</h1>
 <div class="en">八字术语 · 十神详解 · 日主性格 · 取自公有古籍</div>
@@ -324,27 +220,63 @@ ${sec('十天干日主性格', RIZHU)}
 ` + FOOT
 }
 
-// 首页：注入 Organization/WebSite 结构化数据（合法的 head 数据，非隐藏正文）
-function injectHome() {
-  const file = join(DIST, 'index.html')
-  let html = readFileSync(file, 'utf8')
-  const org = { '@context': 'https://schema.org', '@type': 'Organization', name: '一命 ONEMING', url: `${BASE}/`, logo: `${BASE}/share-cover.png`, sameAs: ['https://github.com/xcatea/oneming'] }
-  const site = { '@context': 'https://schema.org', '@type': 'WebSite', name: '一命 ONEMING', alternateName: 'oneming', url: `${BASE}/`, inLanguage: 'zh-CN', description: '免费八字排盘与命盘术语解释工具：四柱八字、五行分布、十神关系，并解释命盘中出现的每一个专业术语。' }
-  const ld = `<script type="application/ld+json">${JSON.stringify(org)}</script>\n<script type="application/ld+json">${JSON.stringify(site)}</script>`
-  html = html.replace('</head>', `${ld}\n</head>`)
-  writeFileSync(file, html, 'utf8')
-}
-
-function sitemap() {
-  const urls = [`${BASE}/`, `${BASE}/term/`, `${BASE}/yiming-eryun-san-fengshui/`, ...ALL.map((t) => `${BASE}/term/${t.id}/`), ...GUIDES.map((g) => `${BASE}${g.path}`), ...LEGAL.map((p) => `${BASE}/${p.id}/`)]
-  const body = urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n')
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
-}
-
 function write(path, content) {
   const full = join(DIST, path)
   mkdirSync(dirname(full), { recursive: true })
   writeFileSync(full, content, 'utf8')
+}
+
+// ——— 首页（中文 / 英文两个入口）———
+// 1) 注入结构化数据与统计；2) 在 #root 里放一段可抓取的静态导航（React 挂载后会替换掉，对用户不可见差异）
+function homeStatic(lang) {
+  if (lang === 'en') {
+    return `<main style="max-width:720px;margin:0 auto;padding:40px 20px;font-family:Georgia,serif;color:#211d18">
+<h1>Free BaZi Calculator — Four Pillars chart with every term explained</h1>
+<p>Enter your birth date and time to get your Four Pillars of Destiny (BaZi), Five Elements balance and Ten Gods — plus plain-English explanations of every term. Calculated in your browser. No predictions, no fate-changing.</p>
+<p><a href="/en/term/">BaZi glossary</a> · <a href="/en/chinese-zodiac/">Chinese zodiac by year</a> · <a href="/en/2027-year-of-the-fire-goat/">2027 Year of the Fire Goat</a> · <a href="/en/five-element-colors/">Five Element colors</a> · <a href="/">中文版</a></p>
+</main>`
+  }
+  return `<main style="max-width:720px;margin:0 auto;padding:40px 20px;font-family:serif;color:#211d18">
+<h1>一命二运三风水 · 免费八字排盘，看懂你的命盘</h1>
+<p>输入出生时间，免费排出四柱八字、五行分布与十神关系，并解释命盘里出现的每一个专业术语。在浏览器本地计算，不注册、不存储；只谈性格倾向，不预测吉凶、不改运。</p>
+<p><a href="/term/">命理小词典</a> · <a href="/guide/shishen/">十神详解</a> · <a href="/shengxiao/">十二生肖与年份查询</a> · <a href="/2027-huoyang/">2027 丁未火羊年</a> · <a href="/wuxing-colors/">五行配色</a> · <a href="/en/">English</a></p>
+</main>`
+}
+
+function injectHome() {
+  const file = join(DIST, 'index.html')
+  const src = readFileSync(file, 'utf8')
+  const org = { '@context': 'https://schema.org', '@type': 'Organization', name: '一命 ONEMING', url: `${BASE}/`, logo: `${BASE}/share-cover.png`, sameAs: ['https://github.com/xcatea/oneming'] }
+  const siteZh = { '@context': 'https://schema.org', '@type': 'WebSite', name: '一命 ONEMING', alternateName: 'oneming', url: `${BASE}/`, inLanguage: 'zh-CN', description: '免费八字排盘与命盘术语解释工具：四柱八字、五行分布、十神关系，并解释命盘中出现的每一个专业术语。' }
+  const appEn = { '@context': 'https://schema.org', '@type': 'WebApplication', name: 'ONEMING BaZi Calculator', url: `${BASE}/en/`, applicationCategory: 'LifestyleApplication', operatingSystem: 'Any', inLanguage: 'en', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, description: 'Free BaZi (Four Pillars) calculator with Five Elements, Ten Gods and every term explained in plain English.' }
+  const ldTag = (o) => `<script type="application/ld+json">${JSON.stringify(o)}</script>`
+
+  // 中文首页
+  let zh = src.replace('</head>', `${ldTag(org)}\n${ldTag(siteZh)}\n${analyticsTags()}</head>`)
+  zh = zh.replace('<div id="root"></div>', `<div id="root">${homeStatic('zh')}</div>`)
+  writeFileSync(file, zh, 'utf8')
+
+  // 英文首页 /en/：同一个 App，按路径切英文；改写 head 让它成为独立可收录的英文页
+  let en = src
+    .replace('<html lang="zh-CN">', '<html lang="en">')
+    .replace(/<title>[\s\S]*?<\/title>/, '<title>Free BaZi Calculator · Four Pillars Chart with Every Term Explained | ONEMING</title>')
+    .replace(/<meta name="description" content="[^"]*"/, '<meta name="description" content="Free BaZi (Four Pillars of Destiny) calculator: get your Day Master, Five Elements balance and Ten Gods, with every Chinese metaphysics term explained in plain English. No sign-up, no predictions."')
+    .replace(/<link rel="canonical" href="[^"]*"/, `<link rel="canonical" href="${BASE}/en/"`)
+    .replace(/<meta property="og:url" content="[^"]*"/, `<meta property="og:url" content="${BASE}/en/"`)
+    .replace(/<meta property="og:title" content="[^"]*"/, '<meta property="og:title" content="Free BaZi Calculator — every term in your chart explained"')
+    .replace(/<meta property="og:description" content="[^"]*"/, '<meta property="og:description" content="Your Four Pillars, Five Elements and Ten Gods, explained in plain English. Free forever."')
+    .replace(/<meta name="twitter:title" content="[^"]*"/, '<meta name="twitter:title" content="Free BaZi Calculator — every term in your chart explained"')
+    .replace(/<meta name="twitter:description" content="[^"]*"/, '<meta name="twitter:description" content="Your Four Pillars, Five Elements and Ten Gods, explained in plain English. Free forever."')
+    .replace('<meta property="og:site_name" content="一命 ONEMING" />', '<meta property="og:site_name" content="ONEMING" />')
+  en = en.replace('</head>', `${ldTag(org)}\n${ldTag(appEn)}\n${analyticsTags()}</head>`)
+  en = en.replace('<div id="root"></div>', `<div id="root">${homeStatic('en')}</div>`)
+  write('en/index.html', en)
+}
+
+function sitemap(urls) {
+  const today = new Date().toISOString().slice(0, 10)
+  const body = urls.map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
 }
 
 for (const t of ALL) write(`term/${t.id}/index.html`, termPage(t))
@@ -352,6 +284,23 @@ for (const g of GUIDES) write(`${g.path.replace(/^\//, '')}index.html`, guidePag
 write('term/index.html', hubPage())
 for (const p of LEGAL) write(`${p.id}/index.html`, legalPage(p))
 write('yiming-eryun-san-fengshui/index.html', proverbPage())
-write('sitemap.xml', sitemap())
 injectHome()
-console.log(`[gen-static] 生成 ${ALL.length} 个词条页 + ${GUIDES.length} 个深度指南 + 总览 + ${LEGAL.length} 个信任页 + sitemap + 首页静态化`)
+
+// 增长页：英文版、生肖、年份、2027 专题、五行配色
+const growth = buildGrowth({ write, ALL, GUIDES })
+
+// ads.txt（配置了 AdSense 才生成）
+if (CFG.adsenseClient) {
+  write('ads.txt', `google.com, ${CFG.adsenseClient.replace(/^ca-/, '')}, DIRECT, f08c47fec0942fa0\n`)
+}
+
+const urls = [
+  `${BASE}/`, `${BASE}/en/`, `${BASE}/term/`, `${BASE}/yiming-eryun-san-fengshui/`,
+  ...ALL.map((t) => `${BASE}/term/${t.id}/`),
+  ...GUIDES.map((g) => `${BASE}${g.path}`),
+  ...LEGAL.map((p) => `${BASE}/${p.id}/`),
+  ...LEGAL_EN.map((p) => `${BASE}/en/${p.id}/`),
+  ...growth.urls,
+]
+write('sitemap.xml', sitemap([...new Set(urls)]))
+console.log(`[gen-static] 词条 ${ALL.length} + 指南 ${GUIDES.length} + 信任页 ${LEGAL.length}×2 + 增长页 ${growth.urls.length}，sitemap 共 ${new Set(urls).size} 条`)
