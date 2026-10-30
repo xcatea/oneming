@@ -5,6 +5,7 @@ import { analyzeChart } from './analyze.js'
 import { generateReading, fallbackProse, validateReading } from './reading.js'
 import { TERM_BY_ID } from './terms.js'
 import { SITE, MONETIZE } from './site.config.js'
+import { SHISHEN_EN, NAYIN_EN } from './wuxing.js'
 import { track } from './track.js'
 
 // 变现位全部由 site.config.js 驱动：留空即隐藏
@@ -262,8 +263,8 @@ function Pillar({ p, lang }) {
       <span className="mb-3 text-xs tracking-wider text-[var(--color-ink-soft)]">{lang === 'en' ? p.labelEn : p.labelZh}</span>
       <span className="pillar-glyph text-4xl md:text-5xl" style={{ color: ELEMENT_META[p.ganElement].color }}>{p.gan}</span>
       <span className="pillar-glyph mt-1 text-4xl md:text-5xl" style={{ color: ELEMENT_META[p.zhiElement].color }}>{p.zhi}</span>
-      <span className="mt-3 text-[11px] text-[var(--color-ink-soft)]">{p.shishen}</span>
-      <span className="mt-0.5 text-[11px] text-[var(--color-ink-soft)]">{p.nayin}</span>
+      <span className="mt-3 text-center text-[11px] leading-tight text-[var(--color-ink-soft)]">{lang === 'en' ? SHISHEN_EN[p.shishen] || p.shishen : p.shishen}</span>
+      <span className="mt-0.5 text-center text-[11px] leading-tight text-[var(--color-ink-soft)]" title={p.nayin}>{lang === 'en' ? NAYIN_EN[p.nayin] || p.nayin : p.nayin}</span>
     </div>
   )
 }
@@ -633,7 +634,7 @@ function Reading({ data, t, lang, onTerm }) {
     for (const p of data.pillars) {
       if (p.key === 'day') continue
       const mid = SHISHEN_MODAL[p.shishen]
-      if (mid && !seen.has(p.shishen)) { seen.add(p.shishen); list.push({ label: lang === 'en' ? p.shishen : p.shishen, id: mid }) }
+      if (mid && !seen.has(p.shishen)) { seen.add(p.shishen); list.push({ label: lang === 'en' ? SHISHEN_EN[p.shishen] || p.shishen : p.shishen, id: mid }) }
     }
     list.push({ label: lang === 'en' ? 'Na Yin' : '纳音', id: 'nayin' })
     return list

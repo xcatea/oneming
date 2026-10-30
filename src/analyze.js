@@ -136,7 +136,10 @@ export function analyzeChart(chart, lang = 'zh') {
     : `日主${tierZh}，喜用倾向于${favorShishenZh}，对应五行：${elNames(favorEls)}。`
 
   // 性格主述：基调 + 旺衰修饰
-  const core = `${L(ELEMENT_TRAIT[D])}。${L(STRENGTH_MOD[tier])}`
+  const traitText = L(ELEMENT_TRAIT[D])
+  const core = lang === 'en'
+    ? `You come across as ${traitText}. ${L(STRENGTH_MOD[tier])}`
+    : `${traitText}。${L(STRENGTH_MOD[tier])}`
   // 可发挥方向：由喜用五行映射
   const leverage = favorEls.map((e) => L(FAVOR_DIRECTION[e])).join(lang === 'en' ? '; ' : '；')
 

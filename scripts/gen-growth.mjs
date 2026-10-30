@@ -3,7 +3,7 @@
 import { Lunar } from 'lunar-javascript'
 import { BASE, esc, baseName, head, foot, articleLd, breadcrumbLd, faqLd, faqHtml, jsonLd } from './page-kit.mjs'
 import { ANIMALS, SANHE, LIUHE, LIUCHONG, STEM_EN, BRANCH_EN, YANG_STEMS, ELEMENT_FLAVOR, ELEMENT_COLORS } from './zodiac-data.mjs'
-import { GAN_WUXING, ELEMENT_META } from '../src/wuxing.js'
+import { GAN_WUXING, ELEMENT_META, NAYIN_EN } from '../src/wuxing.js'
 import { MONETIZE, SITE } from '../src/site.config.js'
 
 const YEAR_FROM = 1930
@@ -14,16 +14,6 @@ const EL_EN = (e) => ELEMENT_META[e].en
 const animalByZhi = Object.fromEntries(ANIMALS.map((a) => [a.zhi, a]))
 const animalById = Object.fromEntries(ANIMALS.map((a) => [a.id, a]))
 
-const NAYIN_EN = {
-  海中金: 'Gold in the Sea', 炉中火: 'Fire in the Furnace', 大林木: 'Wood of the Great Forest', 路旁土: 'Earth by the Roadside',
-  剑锋金: 'Metal of the Sword Blade', 山头火: 'Fire on the Mountain', 涧下水: 'Water in the Ravine', 城头土: 'Earth on the City Wall',
-  白蜡金: 'White Wax Metal', 杨柳木: 'Willow Wood', 泉中水: 'Water in the Spring', 屋上土: 'Earth on the Roof',
-  霹雳火: 'Thunderbolt Fire', 松柏木: 'Pine and Cypress Wood', 长流水: 'Long-Flowing Water', 沙中金: 'Gold in the Sand',
-  山下火: 'Fire at the Foot of the Mountain', 平地木: 'Wood of the Plain', 壁上土: 'Earth on the Wall', 金箔金: 'Gold Leaf Metal',
-  覆灯火: 'Lamp Fire', 天河水: 'Water of the Heavenly River', 大驿土: 'Earth of the Great Post Road', 钗钏金: 'Hairpin and Bracelet Metal',
-  桑柘木: 'Mulberry Wood', 大溪水: 'Water of the Great Stream', 沙中土: 'Earth in the Sand', 天上火: 'Fire in the Sky',
-  石榴木: 'Pomegranate Wood', 大海水: 'Water of the Great Sea',
-}
 const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 const pad = (n) => String(n).padStart(2, '0')
