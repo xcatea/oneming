@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { STRINGS } from './strings.js'
-import { computeBazi, ELEMENTS, ELEMENT_META } from './bazi.js'
+import { computeBazi, ELEMENTS, ELEMENT_META, LUNAR_MONTH_ZH, LUNAR_DAY_ZH, lunarLeapMonth, lunarMonthDays, lunarToSolar, solarToLunar } from './bazi.js'
+import { CITIES, CITY_BY_ID, correctTime, inChinaDST } from './timefix.js'
 import { analyzeChart } from './analyze.js'
 import { generateReading, fallbackProse, validateReading } from './reading.js'
 import { TERM_BY_ID } from './terms.js'
@@ -108,12 +109,14 @@ function parseUrlSeed() {
     const hourKnown = rawT !== 'unknown'
     const tm = hourKnown ? rawT : '12:00'
     const g = p.get('g') === 'female' ? 'female' : 'male'
+    const city = CITY_BY_ID[p.get('c')] ? p.get('c') : ''
+    const dst = p.get('dst') === '1'
     const [y, m, dd] = d.split('-').map(Number)
     const [hh, mm] = tm.split(':').map(Number)
     if (!y || !m || !dd) return null
     return {
-      input: { y, m, d: dd, hh: hh || 0, mm: mm || 0, gender: g, hourKnown },
-      fields: { date: d, time: tm, gender: g, hourKnown },
+      input: { y, m, d: dd, hh: hh || 0, mm: mm || 0, gender: g, hourKnown, city, dst },
+      fields: { date: d, time: tm, gender: g, hourKnown, city, dst },
     }
   } catch (e) {
     return null
@@ -123,7 +126,8 @@ function parseUrlSeed() {
 function buildShareUrl(input, lang) {
   const d = `${input.y}-${String(input.m).padStart(2, '0')}-${String(input.d).padStart(2, '0')}`
   const tm = input.hourKnown === false ? 'unknown' : `${String(input.hh).padStart(2, '0')}:${String(input.mm).padStart(2, '0')}`
-  return `${window.location.origin}${langBase(lang)}?d=${d}&t=${tm}&g=${input.gender}`
+  const extra = (input.city ? `&c=${input.city}` : '') + (input.dst ? '&dst=1' : '')
+  return `${window.location.origin}${langBase(lang)}?d=${d}&t=${tm}&g=${input.gender}${extra}`
 }
 
 
@@ -211,28 +215,99 @@ function Field({ label, children }) {
 const inputCls =
   'w-full rounded-lg border border-[rgba(33,29,24,0.18)] bg-[rgba(255,255,255,0.5)] px-3 py-2.5 text-[var(--color-ink)] outline-none transition focus:border-[var(--color-jade)]'
 
-function BaziForm({ t, onSubmit, initial }) {
+const pad2 = (n) => String(n).padStart(2, '0')
+const LUNAR_YEARS = Array.from({ length: 2099 - 1901 + 1 }, (_, i) => 1901 + i)
+
+function BaziForm({ t, lang, onSubmit, initial }) {
+  const [cal, setCal] = useState('solar') // 'solar' | 'lunar'
   const [date, setDate] = useState(initial?.date || '1995-08-15')
+  const [ly, setLy] = useState(1995)
+  const [lm, setLm] = useState('7') // '7' 或 'L7'（闰七月）
+  const [ld, setLd] = useState(21)
   const [time, setTime] = useState(initial?.time || '14:30')
   const [gender, setGender] = useState(initial?.gender || 'male')
   const [hourUnknown, setHourUnknown] = useState(initial?.hourKnown === false)
+  const [city, setCity] = useState(initial?.city || '')
+  const [dst, setDst] = useState(initial?.dst ?? true)
+  const isZh = lang !== 'en'
+
+  // 当前选择对应的公历日期
+  const leap = lunarLeapMonth(ly)
+  const lmNum = Number(lm.replace('L', ''))
+  const lmLeap = lm.startsWith('L')
+  const lDays = lunarMonthDays(ly, lmNum, lmLeap)
+  const solar = useMemo(() => {
+    if (cal === 'lunar') {
+      try { return lunarToSolar(ly, lmNum, lmLeap, ld) } catch (e) { return null }
+    }
+    const [y, m, d] = date.split('-').map(Number)
+    return y && m && d ? { y, m, d } : null
+  }, [cal, date, ly, lmNum, lmLeap, ld])
+  const [hh, mm] = time.split(':').map(Number)
+  const showDst = isZh && !hourUnknown && solar && inChinaDST(solar.y, solar.m, solar.d, hh || 0)
+
+  function switchCal(next) {
+    if (next === cal || !solar) { setCal(next); return }
+    // 切换时把当前日期换算过去，不用重新选
+    if (next === 'lunar') {
+      const l = solarToLunar(solar.y, solar.m, solar.d)
+      setLy(l.y); setLm((l.leap ? 'L' : '') + l.m); setLd(l.d)
+    } else {
+      setDate(`${solar.y}-${pad2(solar.m)}-${pad2(solar.d)}`)
+    }
+    setCal(next)
+  }
 
   function handle() {
-    const [y, m, d] = date.split('-').map(Number)
-    const [hh, mm] = time.split(':').map(Number)
-    if (!y || !m || !d) return
-    onSubmit({ y, m, d, hh: hh || 0, mm: mm || 0, gender, hourKnown: !hourUnknown })
+    if (!solar) return
+    onSubmit({
+      y: solar.y, m: solar.m, d: solar.d, hh: hh || 0, mm: mm || 0, gender,
+      hourKnown: !hourUnknown,
+      city: isZh && !hourUnknown ? city : '',
+      dst: showDst ? dst : false,
+      lunarInput: cal === 'lunar',
+    })
   }
+
+  const monthOptions = []
+  for (let m = 1; m <= 12; m++) {
+    monthOptions.push({ v: String(m), label: isZh ? `${LUNAR_MONTH_ZH[m - 1]}月` : `Month ${m}` })
+    if (leap === m) monthOptions.push({ v: 'L' + m, label: isZh ? `闰${LUNAR_MONTH_ZH[m - 1]}月` : `Leap month ${m}` })
+  }
+  const segBtn = (on) => `rounded-full px-3.5 py-1 text-sm transition ${on ? 'bg-[var(--color-jade)] text-[var(--color-paper)]' : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'}`
 
   return (
     <section id="form" className="mx-auto max-w-xl px-6 pb-8 md:px-12">
       <div className="rounded-2xl border border-[rgba(33,29,24,0.12)] bg-[rgba(255,255,255,0.28)] p-6 md:p-8">
-        <h2 className="font-zh text-2xl font-semibold">{t.formTitle}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-zh text-2xl font-semibold">{t.formTitle}</h2>
+          <div className="inline-flex rounded-full border border-[rgba(33,29,24,0.15)] p-0.5" role="tablist" aria-label={t.calLabel}>
+            <button type="button" id="cal-solar" role="tab" aria-selected={cal === 'solar'} onClick={() => switchCal('solar')} className={segBtn(cal === 'solar')}>{t.calSolar}</button>
+            <button type="button" id="cal-lunar" role="tab" aria-selected={cal === 'lunar'} onClick={() => switchCal('lunar')} className={segBtn(cal === 'lunar')}>{t.calLunar}</button>
+          </div>
+        </div>
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-soft)]">{t.formHint}</p>
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <Field label={t.date}>
-            <input type="date" value={date} min="1901-01-01" max="2099-12-31" onChange={(e) => setDate(e.target.value)} className={inputCls} />
-          </Field>
+          {cal === 'solar' ? (
+            <Field label={t.date}>
+              <input type="date" value={date} min="1901-01-01" max="2099-12-31" onChange={(e) => setDate(e.target.value)} className={inputCls} />
+            </Field>
+          ) : (
+            <Field label={t.lunarDate}>
+              <span className="grid grid-cols-[1.3fr_1.2fr_1fr] gap-1.5">
+                <select id="lunar-y" aria-label={t.lunarYear} value={ly} onChange={(e) => { setLy(Number(e.target.value)); setLm(String(lmNum)) }} className={`${inputCls} px-2`}>
+                  {LUNAR_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <select id="lunar-m" aria-label={t.lunarMonth} value={lm} onChange={(e) => setLm(e.target.value)} className={`${inputCls} px-2`}>
+                  {monthOptions.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+                </select>
+                <select id="lunar-d" aria-label={t.lunarDay} value={Math.min(ld, lDays)} onChange={(e) => setLd(Number(e.target.value))} className={`${inputCls} px-2`}>
+                  {Array.from({ length: lDays }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{isZh ? LUNAR_DAY_ZH[d - 1] : d}</option>)}
+                </select>
+              </span>
+              {solar && <span className="mt-1.5 block text-xs text-[var(--color-ink-soft)]" id="lunar-solar">{t.lunarIs} {solar.y}-{pad2(solar.m)}-{pad2(solar.d)}</span>}
+            </Field>
+          )}
           <Field label={t.time}>
             <input type="time" value={time} disabled={hourUnknown} onChange={(e) => setTime(e.target.value)} className={`${inputCls} disabled:opacity-40`} />
             <span className="mt-1.5 flex items-center gap-1.5 text-xs text-[var(--color-ink-soft)]">
@@ -246,7 +321,21 @@ function BaziForm({ t, onSubmit, initial }) {
               <option value="female">{t.female}</option>
             </select>
           </Field>
-          <div className="flex items-end">
+          {isZh && (
+            <Field label={t.birthPlace}>
+              <select id="birth-city" value={city} disabled={hourUnknown} onChange={(e) => setCity(e.target.value)} className={`${inputCls} disabled:opacity-40`}>
+                <option value="">{t.birthPlaceNone}</option>
+                {CITIES.map(([id, zh]) => <option key={id} value={id}>{zh}</option>)}
+              </select>
+            </Field>
+          )}
+          {showDst && (
+            <label className="flex items-start gap-1.5 text-xs leading-relaxed text-[var(--color-ink-soft)] sm:col-span-2">
+              <input id="dst-fix" type="checkbox" checked={dst} onChange={(e) => setDst(e.target.checked)} className="mt-0.5 accent-[var(--color-jade)]" />
+              <span>{t.dstLabel}</span>
+            </label>
+          )}
+          <div className={`flex items-end ${isZh ? 'sm:col-span-2' : ''}`}>
             <button onClick={handle} className="w-full rounded-lg bg-[var(--color-jade)] px-5 py-2.5 text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]">
               {t.submit}
             </button>
@@ -788,11 +877,19 @@ function Result({ data, input, t, lang, onTerm }) {
 
         <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-[var(--color-ink-soft)]">
           <span>{data.solarText}</span>
+          {lang !== 'en' && <span>· {t.resultLunar} {data.lunarText}</span>}
           <span>· {t.shengxiao} {data.shengxiao}</span>
           <span>· {t.xingzuo} {data.xingzuo}</span>
           <span>· {t.dayMaster} {data.dayGan}（{ELEMENT_META[data.dayElement][lang === 'en' ? 'en' : 'zh']}）</span>
         </div>
 
+        {data.fix?.changed && (
+          <p className="mt-2 text-xs leading-relaxed text-[var(--color-jade)]" id="time-fix-note">
+            {data.fix.dst && <span>{t.resultDst} </span>}
+            {data.fix.solar && <span>{t.resultSolarTime} {data.fix.time}（{data.fix.solar.city}，东经 {data.fix.solar.lon}°，{data.fix.solar.offset >= 0 ? '+' : ''}{data.fix.solar.offset} 分钟）</span>}
+            {!data.fix.solar && <span>{t.resultUsedTime} {data.fix.time}</span>}
+          </p>
+        )}
         <SaveShare input={input} t={t} lang={lang} />
 
         {/* four pillars */}
@@ -937,7 +1034,7 @@ export default function App() {
 
   function submitChart(next) {
     setInput(next)
-    track('chart_submit', { lang, hour_known: next.hourKnown !== false })
+    track('chart_submit', { lang, hour_known: next.hourKnown !== false, lunar_input: !!next.lunarInput, solar_time: !!next.city })
   }
 
   function openTerm(id) {
@@ -947,7 +1044,10 @@ export default function App() {
 
   const data = useMemo(() => {
     if (!input) return null
-    return computeBazi(input.y, input.m, input.d, input.hh, input.mm, input.gender, lang, input.hourKnown !== false)
+    const hourKnown = input.hourKnown !== false
+    const fx = hourKnown ? correctTime(input) : { ...input, notes: {} }
+    const chart = computeBazi(fx.y, fx.m, fx.d, fx.hh, fx.mm, input.gender, lang, hourKnown)
+    return { ...chart, fix: { ...fx.notes, time: `${pad2(fx.hh)}:${pad2(fx.mm)}`, changed: !!(fx.notes.dst || fx.notes.solar) } }
   }, [input, lang])
 
   function scrollToForm() {
@@ -971,7 +1071,7 @@ export default function App() {
     <div className="min-h-screen">
       <Header lang={lang} setLang={setLang} t={t} onHome={goHome} />
       <Hero t={t} lang={lang} onStart={scrollToForm} />
-      <BaziForm t={t} onSubmit={submitChart} initial={urlSeed?.fields} />
+      <BaziForm key={lang} t={t} lang={lang} onSubmit={submitChart} initial={input ? { date: `${input.y}-${pad2(input.m)}-${pad2(input.d)}`, time: `${pad2(input.hh)}:${pad2(input.mm)}`, gender: input.gender, hourKnown: input.hourKnown, city: input.city, dst: input.dst } : urlSeed?.fields} />
       {data && <Result key={lang + JSON.stringify(input)} data={data} input={input} t={t} lang={lang} onTerm={openTerm} />}
       <Support t={t} lang={lang} />
       <Shop t={t} lang={lang} />

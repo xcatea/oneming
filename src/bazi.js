@@ -1,4 +1,4 @@
-import { Solar } from 'lunar-javascript'
+import { Solar, Lunar, LunarYear, LunarMonth } from 'lunar-javascript'
 
 import { GAN_WUXING, ZHI_WUXING, ELEMENTS, ELEMENT_META, tally } from './wuxing.js'
 
@@ -77,4 +77,37 @@ export function computeBazi(year, month, day, hour, minute, gender, lang = 'zh',
     tone: DAYMASTER_TONE[dayElement][lang === 'en' ? 'en' : 'zh'],
     balance: balanceNote(counts, dayElement, lang),
   }
+}
+
+// —— 农历输入 ——
+
+export const LUNAR_MONTH_ZH = ['正', '二', '三', '四', '五', '六', '七', '八', '九', '十', '冬', '腊']
+export const LUNAR_DAY_ZH = Array.from({ length: 30 }, (_, i) => {
+  const n = i + 1
+  if (n <= 10) return '初' + ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'][n - 1]
+  if (n < 20) return '十' + ['一', '二', '三', '四', '五', '六', '七', '八', '九'][n - 11]
+  if (n === 20) return '二十'
+  if (n < 30) return '廿' + ['一', '二', '三', '四', '五', '六', '七', '八', '九'][n - 21]
+  return '三十'
+})
+
+// 某农历年的闰月（0 = 无闰月）
+export function lunarLeapMonth(y) {
+  try { return LunarYear.fromYear(y).getLeapMonth() } catch (e) { return 0 }
+}
+// 某农历月的天数（leap=true 表示闰月）
+export function lunarMonthDays(y, m, leap) {
+  try { return LunarMonth.fromYm(y, leap ? -m : m).getDayCount() } catch (e) { return 30 }
+}
+// 农历 → 公历 { y, m, d }
+export function lunarToSolar(y, m, leap, d) {
+  const days = lunarMonthDays(y, m, leap)
+  const s = Lunar.fromYmd(y, leap ? -m : m, Math.min(d, days)).getSolar()
+  return { y: s.getYear(), m: s.getMonth(), d: s.getDay() }
+}
+// 公历 → 农历 { y, m, leap, d }
+export function solarToLunar(y, m, d) {
+  const l = Solar.fromYmd(y, m, d).getLunar()
+  const lm = l.getMonth()
+  return { y: l.getYear(), m: Math.abs(lm), leap: lm < 0, d: l.getDay() }
 }
