@@ -228,7 +228,7 @@ function BaziForm({ t, lang, onSubmit, initial }) {
   const [gender, setGender] = useState(initial?.gender || 'male')
   const [hourUnknown, setHourUnknown] = useState(initial?.hourKnown === false)
   const [city, setCity] = useState(initial?.city || '')
-  const [dst, setDst] = useState(initial?.dst ?? true)
+  const [dst, setDst] = useState(initial?.dst ?? false)
   const isZh = lang !== 'en'
 
   // 当前选择对应的公历日期
@@ -244,7 +244,7 @@ function BaziForm({ t, lang, onSubmit, initial }) {
     return y && m && d ? { y, m, d } : null
   }, [cal, date, ly, lmNum, lmLeap, ld])
   const [hh, mm] = time.split(':').map(Number)
-  const showDst = isZh && !hourUnknown && solar && inChinaDST(solar.y, solar.m, solar.d, hh || 0)
+  const showDst = isZh && !hourUnknown && solar && inChinaDST(solar.y, solar.m, solar.d)
 
   function switchCal(next) {
     if (next === cal || !solar) { setCal(next); return }
