@@ -1,25 +1,8 @@
 import { Solar } from 'lunar-javascript'
 
-// 天干 / 地支 → 五行映射
-const GAN_WUXING = {
-  甲: 'wood', 乙: 'wood', 丙: 'fire', 丁: 'fire', 戊: 'earth',
-  己: 'earth', 庚: 'metal', 辛: 'metal', 壬: 'water', 癸: 'water',
-}
-const ZHI_WUXING = {
-  寅: 'wood', 卯: 'wood', 巳: 'fire', 午: 'fire',
-  辰: 'earth', 戌: 'earth', 丑: 'earth', 未: 'earth',
-  申: 'metal', 酉: 'metal', 亥: 'water', 子: 'water',
-}
+import { GAN_WUXING, ZHI_WUXING, ELEMENTS, ELEMENT_META, tally } from './wuxing.js'
 
-export const ELEMENTS = ['wood', 'fire', 'earth', 'metal', 'water']
-
-export const ELEMENT_META = {
-  wood: { zh: '木', en: 'Wood', color: '#3F7A5B' },
-  fire: { zh: '火', en: 'Fire', color: '#B5483A' },
-  earth: { zh: '土', en: 'Earth', color: '#B08A3E' },
-  metal: { zh: '金', en: 'Metal', color: '#9C8A57' },
-  water: { zh: '水', en: 'Water', color: '#3A6079' },
-}
+export { ELEMENTS, ELEMENT_META }
 
 // 日主性格基调（以日干五行为锚，纯倾向描述，不做吉凶断言）
 const DAYMASTER_TONE = {
@@ -45,15 +28,6 @@ const DAYMASTER_TONE = {
   },
 }
 
-function tally(pillars) {
-  const counts = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 }
-  pillars.forEach((p) => {
-    counts[GAN_WUXING[p.gan]]++
-    counts[ZHI_WUXING[p.zhi]]++
-  })
-  return counts
-}
-
 // 五行强弱的轻量提示（参考性，非命理裁决）
 function balanceNote(counts, dayElement, lang) {
   const max = Math.max(...Object.values(counts))
@@ -61,14 +35,16 @@ function balanceNote(counts, dayElement, lang) {
   const strong = ELEMENTS.filter((e) => counts[e] === max)
   const weak = ELEMENTS.filter((e) => counts[e] === min)
   const m = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
+  const total = Object.values(counts).reduce((a, b) => a + b, 0)
   if (lang === 'en') {
-    return `Across your eight characters, ${strong.map(m).join(' / ')} shows up most and ${weak.map(m).join(' / ')} least. Read it as where your energy naturally pools versus where you may want to lean in on purpose — not as a verdict.`
+    return `Across your ${total === 8 ? 'eight' : 'six'} characters, ${strong.map(m).join(' / ')} shows up most and ${weak.map(m).join(' / ')} least. Read it as where your energy naturally pools versus where you may want to lean in on purpose — not as a verdict.`
   }
-  return `你八个字里，${strong.map(m).join('、')}出现得最多，${weak.map(m).join('、')}相对最少。可以把它当作"精力天然汇聚在哪、又可以有意识补哪一块"的参考，而不是结论。`
+  return `你${total === 8 ? '八' : '六'}个字里，${strong.map(m).join('、')}出现得最多，${weak.map(m).join('、')}相对最少。可以把它当作"精力天然汇聚在哪、又可以有意识补哪一块"的参考，而不是结论。`
 }
 
-export function computeBazi(year, month, day, hour, minute, gender, lang = 'zh') {
-  const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0)
+// hourKnown=false：不知道出生时辰 → 只排年/月/日三柱（按正午取日柱，避开子时换日问题）
+export function computeBazi(year, month, day, hour, minute, gender, lang = 'zh', hourKnown = true) {
+  const solar = hourKnown ? Solar.fromYmdHms(year, month, day, hour, minute, 0) : Solar.fromYmdHms(year, month, day, 12, 0, 0)
   const lunar = solar.getLunar()
   const ec = lunar.getEightChar()
 
@@ -77,7 +53,7 @@ export function computeBazi(year, month, day, hour, minute, gender, lang = 'zh')
     { key: 'month', labelZh: '月柱', labelEn: 'Month', gan: ec.getMonthGan(), zhi: ec.getMonthZhi(), shishen: ec.getMonthShiShenGan(), nayin: ec.getMonthNaYin() },
     { key: 'day', labelZh: '日柱', labelEn: 'Day', gan: ec.getDayGan(), zhi: ec.getDayZhi(), shishen: lang === 'en' ? 'Self' : '日主', nayin: ec.getDayNaYin() },
     { key: 'time', labelZh: '时柱', labelEn: 'Hour', gan: ec.getTimeGan(), zhi: ec.getTimeZhi(), shishen: ec.getTimeShiShenGan(), nayin: ec.getTimeNaYin() },
-  ].map((p) => ({
+  ].filter((p) => hourKnown || p.key !== 'time').map((p) => ({
     ...p,
     ganElement: GAN_WUXING[p.gan],
     zhiElement: ZHI_WUXING[p.zhi],
@@ -88,8 +64,9 @@ export function computeBazi(year, month, day, hour, minute, gender, lang = 'zh')
 
   return {
     solarText: lang === 'en'
-      ? `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
-      : `${year}年${month}月${day}日 ${hour}时${minute}分`,
+      ? `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${hourKnown ? `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}` : '(hour unknown)'}`
+      : `${year}年${month}月${day}日 ${hourKnown ? `${hour}时${minute}分` : '（时辰未知）'}`,
+    hourKnown,
     lunarText: lunar.toString(),
     shengxiao: lunar.getYearShengXiao(),
     xingzuo: solar.getXingZuo(),

@@ -83,7 +83,10 @@ export function analyzeChart(chart, lang = 'zh') {
   for (const el of others) if (isSupporter(relationOf(D, el))) support++
 
   // —— 3) 评分与三档（得令 +3；每个同党 +1，范围 0–9）
-  const score = (inSeason ? 3 : 0) + support
+  // 时辰未知时只有 4 个参与字，按 6 字等比折算，保证三档阈值一致
+  const hourKnown = others.length === 6
+  const supportScaled = hourKnown ? support : Math.round((support * 6) / others.length)
+  const score = (inSeason ? 3 : 0) + supportScaled
   let tier = 'balanced'
   if (score >= 5) tier = 'strong'
   else if (score <= 2) tier = 'weak'
@@ -118,11 +121,13 @@ export function analyzeChart(chart, lang = 'zh') {
   const reasonZh =
     `日主为${EL_ZH[D]}，生于${EL_ZH[monthZhiEl]}月——` +
     (inSeason ? '当月之气生扶日主，属得令；' : '当月之气未生扶日主，属失令；') +
-    `八字中生扶日主（印、比劫）的字共 ${support} 个。综合判为「${tierZh}」。`
+    `${hourKnown ? '八字' : '已知三柱'}中生扶日主（印、比劫）的字共 ${support} 个。综合判为「${tierZh}」` +
+    (hourKnown ? '。' : '（时辰未知，按三柱估算，仅供参考）。')
   const reasonEn =
     `The Day Master is ${EL_EN[D]}, born in a ${EL_EN[monthZhiEl]} month — ` +
     (inSeason ? 'the season supports it (in-season); ' : 'the season does not support it (out-of-season); ') +
-    `${support} of the other characters reinforce it. Overall: ${tierEn}.`
+    `${support} of the other characters reinforce it. Overall: ${tierEn}` +
+    (hourKnown ? '.' : ' (hour unknown — estimated from three pillars).')
 
   const elNames = (arr) => arr.map((e) => (lang === 'en' ? EL_EN[e] : EL_ZH[e])).join(lang === 'en' ? ' / ' : '、')
 
@@ -137,7 +142,7 @@ export function analyzeChart(chart, lang = 'zh') {
 
   return {
     dayElement: D,
-    strength: { tier, label: lang === 'en' ? tierEn : tierZh, score, inSeason, supportCount: support, reason: lang === 'en' ? reasonEn : reasonZh },
+    strength: { tier, label: lang === 'en' ? tierEn : tierZh, score, inSeason, hourKnown, supportCount: support, reason: lang === 'en' ? reasonEn : reasonZh },
     favor: { elements: favorEls, avoidElements: avoidEls, logic: favorLogic },
     traits: {
       core,

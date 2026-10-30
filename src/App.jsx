@@ -2,11 +2,13 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { STRINGS } from './strings.js'
 import { computeBazi, ELEMENTS, ELEMENT_META } from './bazi.js'
 import { analyzeChart } from './analyze.js'
-import { generateReading, fallbackProse } from './reading.js'
+import { generateReading, fallbackProse, validateReading } from './reading.js'
 import { TERM_BY_ID } from './terms.js'
+import { SITE, MONETIZE } from './site.config.js'
+import { track } from './track.js'
 
-const SHOP_URL = 'https://example.com/shop' // TODO: 换成你的店铺/独立站地址（留 example.com 则显示"筹备中"）
-const TIP_URL = 'https://ko-fi.com/oneming' // Ko-fi 已激活
+// 变现位全部由 site.config.js 驱动：留空即隐藏
+const pick = (lang, zh, en) => (lang === 'en' ? en || zh : zh || en)
 
 // AI 文笔层：解读长度（'concise' 精简档 / 'standard' 标准档）
 const READING_MODE = 'concise'
@@ -28,22 +30,15 @@ function cacheSet(key, val) {
 
 // DeepSeek 适配器：把脱敏盘面事实发给后端函数 /api/reading（Key 在服务端）。
 // 任何失败（接口未部署 / 超时 / 违规被拒）都会抛错 → 编排器自动回退到兜底文案。
+// 只发干支（最多 8 个字），服务端用同一套确定性引擎重算事实再写解读——不发出生日期，也不发任何自由文本。
 async function callModel(_prompt, ctx) {
-  const { analysis, chart, lang } = ctx
-  const key = chart.pillars.map((p) => p.gan + p.zhi).join('') + ':' + lang + ':' + READING_MODE
+  const { chart, lang } = ctx
+  const key = chart.pillars.map((p) => p.key[0] + p.gan + p.zhi).join('') + ':' + lang + ':' + READING_MODE
   const cached = cacheGet(key)
   if (cached) return cached
 
-  const elName = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
   const facts = {
-    dayGan: chart.dayGan,
-    dayElement: elName(analysis.dayElement),
-    strengthLabel: analysis.strength.label,
-    strengthReason: analysis.strength.reason,
-    favorElements: analysis.favor.elements.map(elName),
-    favorLogic: analysis.favor.logic,
-    core: analysis.traits.core,
-    leverage: analysis.traits.leverage,
+    pillars: chart.pillars.map((p) => ({ key: p.key, gan: p.gan, zhi: p.zhi })),
     lang,
     mode: READING_MODE,
   }
@@ -61,7 +56,7 @@ async function callModel(_prompt, ctx) {
     if (!r.ok) throw new Error('api ' + r.status)
     const d = await r.json()
     if (!d.text) throw new Error('no text')
-    cacheSet(key, d.text)
+    if (validateReading(d.text, lang).ok) cacheSet(key, d.text) // 只缓存合规文本，避免把坏结果永久存进本地
     return d.text
   } catch (e) {
     clearTimeout(timer)
@@ -69,8 +64,6 @@ async function callModel(_prompt, ctx) {
   }
 }
 
-const SHOP_READY = !SHOP_URL.includes('example.com')
-const TIP_READY = true // Ko-fi 已绑定，按钮激活
 
 const STRENGTH_TERM = { weak: 'shenruo', balanced: 'zhonghe', strong: 'shenqiang' }
 
@@ -96,27 +89,40 @@ const SHISHEN_MODAL = {
   比肩: 'bijie', 劫财: 'bijie',
 }
 
-// 从 URL 还原命盘：oneming.net/?d=1995-08-15&t=14:30&g=male
+// 语言由路径决定：/en/ 为英文版，其余为中文版（两个独立可收录的入口）
+function langFromPath() {
+  try { return /^\/en(\/|$)/.test(window.location.pathname) ? 'en' : 'zh' } catch (e) { return 'zh' }
+}
+function langBase(lang) {
+  return lang === 'en' ? '/en/' : '/'
+}
+
+// 从 URL 还原命盘：oneming.net/?d=1995-08-15&t=14:30&g=male（t=unknown 表示时辰未知）
 function parseUrlSeed() {
   try {
     const p = new URLSearchParams(window.location.search)
     const d = p.get('d')
     if (!d) return null
-    const tm = p.get('t') || '12:00'
+    const rawT = p.get('t') || '12:00'
+    const hourKnown = rawT !== 'unknown'
+    const tm = hourKnown ? rawT : '12:00'
     const g = p.get('g') === 'female' ? 'female' : 'male'
     const [y, m, dd] = d.split('-').map(Number)
     const [hh, mm] = tm.split(':').map(Number)
     if (!y || !m || !dd) return null
-    return { input: { y, m, d: dd, hh: hh || 0, mm: mm || 0, gender: g }, fields: { date: d, time: tm, gender: g } }
+    return {
+      input: { y, m, d: dd, hh: hh || 0, mm: mm || 0, gender: g, hourKnown },
+      fields: { date: d, time: tm, gender: g, hourKnown },
+    }
   } catch (e) {
     return null
   }
 }
 
-function buildShareUrl(input) {
+function buildShareUrl(input, lang) {
   const d = `${input.y}-${String(input.m).padStart(2, '0')}-${String(input.d).padStart(2, '0')}`
-  const tm = `${String(input.hh).padStart(2, '0')}:${String(input.mm).padStart(2, '0')}`
-  return `${window.location.origin}/?d=${d}&t=${tm}&g=${input.gender}`
+  const tm = input.hourKnown === false ? 'unknown' : `${String(input.hh).padStart(2, '0')}:${String(input.mm).padStart(2, '0')}`
+  return `${window.location.origin}${langBase(lang)}?d=${d}&t=${tm}&g=${input.gender}`
 }
 
 
@@ -208,12 +214,13 @@ function BaziForm({ t, onSubmit, initial }) {
   const [date, setDate] = useState(initial?.date || '1995-08-15')
   const [time, setTime] = useState(initial?.time || '14:30')
   const [gender, setGender] = useState(initial?.gender || 'male')
+  const [hourUnknown, setHourUnknown] = useState(initial?.hourKnown === false)
 
   function handle() {
     const [y, m, d] = date.split('-').map(Number)
     const [hh, mm] = time.split(':').map(Number)
     if (!y || !m || !d) return
-    onSubmit({ y, m, d, hh: hh || 0, mm: mm || 0, gender })
+    onSubmit({ y, m, d, hh: hh || 0, mm: mm || 0, gender, hourKnown: !hourUnknown })
   }
 
   return (
@@ -226,7 +233,11 @@ function BaziForm({ t, onSubmit, initial }) {
             <input type="date" value={date} min="1901-01-01" max="2099-12-31" onChange={(e) => setDate(e.target.value)} className={inputCls} />
           </Field>
           <Field label={t.time}>
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputCls} />
+            <input type="time" value={time} disabled={hourUnknown} onChange={(e) => setTime(e.target.value)} className={`${inputCls} disabled:opacity-40`} />
+            <span className="mt-1.5 flex items-center gap-1.5 text-xs text-[var(--color-ink-soft)]">
+              <input id="hour-unknown" type="checkbox" checked={hourUnknown} onChange={(e) => setHourUnknown(e.target.checked)} className="accent-[var(--color-jade)]" />
+              <label htmlFor="hour-unknown" className="cursor-pointer">{t.hourUnknown}</label>
+            </span>
           </Field>
           <Field label={t.gender}>
             <select value={gender} onChange={(e) => setGender(e.target.value)} className={inputCls}>
@@ -253,6 +264,16 @@ function Pillar({ p, lang }) {
       <span className="pillar-glyph mt-1 text-4xl md:text-5xl" style={{ color: ELEMENT_META[p.zhiElement].color }}>{p.zhi}</span>
       <span className="mt-3 text-[11px] text-[var(--color-ink-soft)]">{p.shishen}</span>
       <span className="mt-0.5 text-[11px] text-[var(--color-ink-soft)]">{p.nayin}</span>
+    </div>
+  )
+}
+
+function PillarUnknown({ t }) {
+  return (
+    <div className="pillar flex flex-col items-center justify-center rounded-xl border-dashed px-2 py-4 text-center opacity-70">
+      <span className="mb-3 text-xs tracking-wider text-[var(--color-ink-soft)]">{t.hourPillar}</span>
+      <span className="pillar-glyph text-4xl text-[var(--color-ink-soft)] md:text-5xl">？</span>
+      <span className="mt-3 text-[11px] leading-snug text-[var(--color-ink-soft)]">{t.hourUnknownShort}</span>
     </div>
   )
 }
@@ -317,11 +338,12 @@ function TermModal({ id, lang, t, onClose }) {
   )
 }
 
-function SaveShare({ input, t }) {
+function SaveShare({ input, t, lang }) {
   const [done, setDone] = useState(false)
   if (!input) return null
   async function share() {
-    const url = buildShareUrl(input)
+    const url = buildShareUrl(input, lang)
+    track('share_copy', { lang })
     try {
       await navigator.clipboard.writeText(url)
     } catch (e) {
@@ -379,7 +401,7 @@ function wrapLines(ctx, text, maxWidth, isEn) {
 function drawCard(ctx, { chart, analysis, reading, lang, full }) {
   const { w, h, pad } = CARD
   const isEn = lang === 'en'
-  const serif = '"Noto Serif SC", serif'
+  const serif = '"Noto Serif SC", "Songti SC", "STSong", "SimSun", serif'
   const elZh = (e) => ELEMENT_META[e].zh
   const elName = (e) => (isEn ? ELEMENT_META[e].en : ELEMENT_META[e].zh)
   const elColor = (e) => ELEMENT_META[e].color
@@ -431,14 +453,21 @@ function drawCard(ctx, { chart, analysis, reading, lang, full }) {
     for (const ln of lines) { ctx.fillText(ln, cx, qy); qy += 70 }
   } else {
     // —— 完整卡：四柱 ——
-    const cols = chart.pillars
+    const order = ['year', 'month', 'day', 'time']
+    const byKey = Object.fromEntries(chart.pillars.map((p) => [p.key, p]))
     const labels = isEn ? ['Year', 'Month', 'Day', 'Hour'] : ['年', '月', '日', '时']
     const colW = (w - 2 * pad) / 4
     ctx.textAlign = 'center'
-    cols.forEach((p, i) => {
+    order.forEach((k, i) => {
+      const p = byKey[k]
       const x = pad + colW * (i + 0.5)
       ctx.fillStyle = CARD.soft; ctx.font = `400 30px ${serif}`
       ctx.fillText(labels[i], x, 332)
+      if (!p) {
+        ctx.fillStyle = CARD.soft; ctx.font = `400 92px ${serif}`
+        ctx.fillText('？', x, 446); ctx.fillText('？', x, 552)
+        return
+      }
       ctx.fillStyle = elColor(p.ganElement); ctx.font = `700 92px ${serif}`
       ctx.fillText(p.gan, x, 446)
       ctx.fillStyle = elColor(p.zhiElement); ctx.font = `700 92px ${serif}`
@@ -501,7 +530,7 @@ function drawCard(ctx, { chart, analysis, reading, lang, full }) {
   // —— 水印 ——
   ctx.textAlign = 'center'
   ctx.fillStyle = CARD.jade; ctx.font = `700 36px ${serif}`
-  ctx.fillText('oneming.net', cx, 1388)
+  ctx.fillText(SITE.domain, cx, 1388)
   ctx.fillStyle = CARD.soft; ctx.font = `400 24px ${serif}`
   ctx.fillText(isEn ? 'Free BaZi · for fun' : '免费排八字 · 传统文化娱乐参考', cx, 1422)
   ctx.textAlign = 'left'
@@ -524,10 +553,15 @@ function CardModal({ chart, analysis, reading, lang, t, onClose }) {
   useEffect(() => {
     let cancelled = false
     async function run() {
+      // 国内访问 Google Fonts 可能失败：最多等 2.5 秒，超时就用系统宋体直接画，避免卡片一直空白
       try {
-        await document.fonts.load(`700 150px "Noto Serif SC"`)
-        await document.fonts.load(`400 46px "Noto Serif SC"`)
-        await document.fonts.ready
+        await Promise.race([
+          Promise.all([
+            document.fonts.load(`700 150px "Noto Serif SC"`),
+            document.fonts.load(`400 46px "Noto Serif SC"`),
+          ]),
+          new Promise((r) => setTimeout(r, 2500)),
+        ])
       } catch (e) { /* 字体加载失败也尽量画 */ }
       if (cancelled || !canvasRef.current) return
       drawCard(canvasRef.current.getContext('2d'), { chart, analysis, reading, lang, full })
@@ -537,6 +571,7 @@ function CardModal({ chart, analysis, reading, lang, t, onClose }) {
   }, [full, lang, chart, analysis, reading])
 
   function download() {
+    track('card_download', { lang, type: full ? 'full' : 'vibe' })
     const c = canvasRef.current
     if (!c) return
     c.toBlob((blob) => {
@@ -606,16 +641,17 @@ function Reading({ data, t, lang, onTerm }) {
 
   const related = useMemo(() => {
     const out = []
+    const pre = lang === 'en' ? '/en' : ''
     const dg = DAYGAN_PAGE[data.dayGan]
-    if (dg) out.push({ href: `/term/${dg.id}/`, zh: `${data.dayGan}${ELEMENT_META[analysis.dayElement].zh}日主的性格特点`, en: `${dg.en} Day Master personality` })
+    if (dg) out.push({ href: `${pre}/term/${dg.id}/`, zh: `${data.dayGan}${ELEMENT_META[analysis.dayElement].zh}日主的性格特点`, en: `${dg.en} Day Master personality` })
     const st = STRENGTH_TERM[analysis.strength.tier]
-    out.push({ href: `/term/${st}/`, zh: `${analysis.strength.label}是什么意思？`, en: `What does "${analysis.strength.label}" mean?` })
-    out.push({ href: '/term/xiyong/', zh: `喜用神是什么？为什么我喜${analysis.favor.elements.map((e) => ELEMENT_META[e].zh).join('')}`, en: 'What is the favorable element?' })
+    out.push({ href: `${pre}/term/${st}/`, zh: `${analysis.strength.label}是什么意思？`, en: `What does "${analysis.strength.label}" mean?` })
+    out.push({ href: `${pre}/term/xiyong/`, zh: `喜用神是什么？为什么我喜${analysis.favor.elements.map((e) => ELEMENT_META[e].zh).join('')}`, en: 'What is the favorable element?' })
     const seen = new Set()
     for (const p of data.pillars) {
       if (p.key === 'day') continue
       const sp = SHISHEN_PAGE[p.shishen]
-      if (sp && !seen.has(sp.id)) { seen.add(sp.id); out.push({ href: `/term/${sp.id}/`, zh: `${p.shishen}是什么意思？`, en: `What is ${sp.en}?` }) }
+      if (sp && !seen.has(sp.id)) { seen.add(sp.id); out.push({ href: `${pre}/term/${sp.id}/`, zh: `${p.shishen}是什么意思？`, en: `What is ${sp.en}?` }) }
     }
     return out
   }, [data, analysis, lang])
@@ -682,15 +718,60 @@ function Reading({ data, t, lang, onTerm }) {
       </div>
 
       <button
-        onClick={() => setCardOpen(true)}
+        onClick={() => { setCardOpen(true); track('card_open', { lang }) }}
         className="mt-6 rounded-full bg-[var(--color-jade)] px-6 py-2.5 text-sm text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]"
       >
         {t.cardLabel}
       </button>
 
+      <NextSteps analysis={analysis} t={t} lang={lang} />
+
       {cardOpen && (
         <CardModal chart={data} analysis={analysis} reading={reading} lang={lang} t={t} onClose={() => setCardOpen(false)} />
       )}
+    </div>
+  )
+}
+
+// 结果页"再深入一步"：学习（免费）→ 深度报告（付费，可选）→ 五行配色选物（可选）
+// 只展示已配置的项；全部未配置时只保留免费的学习入口。
+function NextSteps({ analysis, t, lang }) {
+  const reportUrl = pick(lang, MONETIZE.reportUrlZh, MONETIZE.reportUrlEn)
+  const shopUrl = pick(lang, MONETIZE.shopUrlZh, MONETIZE.shopUrlEn)
+  const price = lang === 'en' ? MONETIZE.reportPriceEn : MONETIZE.reportPriceZh
+  const favor = analysis.favor.elements.map((e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']).join(lang === 'en' ? ' / ' : '、')
+  const colorsHref = lang === 'en' ? '/en/five-element-colors/' : '/wuxing-colors/'
+  const learnHref = lang === 'en' ? '/en/term/' : '/guide/shishen/'
+
+  const card = 'flex flex-col rounded-xl border border-[rgba(33,29,24,0.12)] bg-[rgba(255,255,255,0.35)] p-4'
+  return (
+    <div className="mt-8">
+      <h4 className="font-zh text-base font-semibold">{t.nextTitle}</h4>
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <a href={learnHref} className={`${card} transition hover:border-[var(--color-jade)]`} onClick={() => track('next_learn', { lang })}>
+          <span className="text-[11px] tracking-widest text-[var(--color-jade)]">{t.nextLearnTag}</span>
+          <span className="font-zh mt-1 font-semibold">{t.nextLearnTitle}</span>
+          <span className="mt-1 text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.nextLearnBody}</span>
+        </a>
+        {reportUrl && (
+          <a href={reportUrl} target="_blank" rel="noopener" className={`${card} transition hover:border-[var(--color-jade)]`} onClick={() => track('report_click', { lang, element: analysis.dayElement })}>
+            <span className="text-[11px] tracking-widest text-[var(--color-seal)]">{t.nextReportTag} · {price}</span>
+            <span className="font-zh mt-1 font-semibold">{t.nextReportTitle}</span>
+            <span className="mt-1 text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.nextReportBody}</span>
+          </a>
+        )}
+        <a
+          href={shopUrl || colorsHref}
+          target={shopUrl ? '_blank' : undefined}
+          rel={shopUrl ? 'noopener' : undefined}
+          className={`${card} transition hover:border-[var(--color-jade)]`}
+          onClick={() => track(shopUrl ? 'shop_click' : 'colors_guide', { lang, favor: analysis.favor.elements.join(',') })}
+        >
+          <span className="text-[11px] tracking-widest text-[var(--color-jade)]">{t.nextColorsTag}</span>
+          <span className="font-zh mt-1 font-semibold">{t.nextColorsTitle.replace('{favor}', favor)}</span>
+          <span className="mt-1 text-xs leading-relaxed text-[var(--color-ink-soft)]">{shopUrl ? t.nextShopBody : t.nextColorsBody}</span>
+        </a>
+      </div>
     </div>
   )
 }
@@ -711,11 +792,12 @@ function Result({ data, input, t, lang, onTerm }) {
           <span>· {t.dayMaster} {data.dayGan}（{ELEMENT_META[data.dayElement][lang === 'en' ? 'en' : 'zh']}）</span>
         </div>
 
-        <SaveShare input={input} t={t} />
+        <SaveShare input={input} t={t} lang={lang} />
 
         {/* four pillars */}
         <div className="mt-7 grid grid-cols-4 gap-2.5 md:gap-4">
           {data.pillars.map((p) => <Pillar key={p.key} p={p} lang={lang} />)}
+          {!data.hourKnown && <PillarUnknown t={t} />}
         </div>
 
         {/* 五行分布（性格解读已由下方 AI 解读覆盖，去掉重复的"性格基调"） */}
@@ -731,7 +813,13 @@ function Result({ data, input, t, lang, onTerm }) {
   )
 }
 
-function Support({ t }) {
+function Support({ t, lang }) {
+  const qrs = [
+    MONETIZE.tipQrWechat && { src: MONETIZE.tipQrWechat, label: t.tipWechat },
+    MONETIZE.tipQrAlipay && { src: MONETIZE.tipQrAlipay, label: t.tipAlipay },
+  ].filter(Boolean)
+  // 中文版优先展示国内赞赏码；英文版展示 Ko-fi
+  const showQr = lang === 'zh' && qrs.length > 0
   return (
     <section className="border-y border-[rgba(33,29,24,0.12)] bg-[rgba(76,107,94,0.07)]">
       <div className="mx-auto flex max-w-4xl flex-col items-start gap-4 px-6 py-12 md:flex-row md:items-center md:justify-between md:px-12">
@@ -740,29 +828,34 @@ function Support({ t }) {
           <h2 className="font-zh mt-2 text-2xl font-semibold">{t.tipTitle}</h2>
           <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-soft)]">{t.tipBody}</p>
         </div>
-        {TIP_READY ? (
+        {showQr ? (
+          <div className="flex shrink-0 gap-4">
+            {qrs.map((q) => (
+              <figure key={q.src} className="text-center">
+                <img src={q.src} alt={q.label} width="120" height="120" loading="lazy" className="h-[120px] w-[120px] rounded-lg bg-white p-1.5" />
+                <figcaption className="mt-1 text-xs text-[var(--color-ink-soft)]">{q.label}</figcaption>
+              </figure>
+            ))}
+          </div>
+        ) : MONETIZE.tipUrl ? (
           <a
-            href={TIP_URL}
+            href={MONETIZE.tipUrl}
             target="_blank"
             rel="noreferrer"
+            onClick={() => track('tip_click', { lang })}
             className="shrink-0 rounded-full bg-[var(--color-ink)] px-7 py-3 text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]"
           >
             {t.tipCta}
           </a>
-        ) : (
-          <span
-            className="shrink-0 cursor-not-allowed rounded-full border border-[rgba(33,29,24,0.25)] px-7 py-3 text-[var(--color-ink-soft)]"
-            title="设置 TIP_URL 后启用"
-          >
-            {t.tipCta}
-          </span>
-        )}
+        ) : null}
       </div>
     </section>
   )
 }
 
-function Shop({ t }) {
+function Shop({ t, lang }) {
+  const shopUrl = pick(lang, MONETIZE.shopUrlZh, MONETIZE.shopUrlEn)
+  const colorsHref = lang === 'en' ? '/en/five-element-colors/' : '/wuxing-colors/'
   return (
     <section className="mx-auto max-w-4xl px-6 py-10 md:px-12">
       <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
@@ -771,41 +864,51 @@ function Shop({ t }) {
           <h2 className="font-zh mt-1.5 text-lg font-semibold text-[var(--color-ink-soft)]">{t.shopTitle}</h2>
           <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-ink-soft)]">{t.shopBody}</p>
         </div>
-        {SHOP_READY ? (
+        <div className="flex shrink-0 flex-wrap gap-2">
           <a
-            href={SHOP_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="shrink-0 rounded-full border border-[var(--color-jade)] px-6 py-2.5 text-sm text-[var(--color-jade)] transition hover:bg-[var(--color-jade)] hover:text-[var(--color-paper)]"
+            href={colorsHref}
+            className="rounded-full border border-[rgba(33,29,24,0.2)] px-5 py-2.5 text-sm text-[var(--color-ink-soft)] transition hover:border-[var(--color-jade)] hover:text-[var(--color-jade)]"
           >
-            {t.shopCta}
+            {t.shopGuideCta}
           </a>
-        ) : (
-          <span className="shrink-0 rounded-full border border-[rgba(33,29,24,0.15)] px-5 py-2 text-xs tracking-wider text-[var(--color-ink-soft)]">
-            {t.shopSoon}
-          </span>
-        )}
+          {shopUrl ? (
+            <a
+              href={shopUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => track('shop_click', { lang, from: 'home' })}
+              className="rounded-full border border-[var(--color-jade)] px-6 py-2.5 text-sm text-[var(--color-jade)] transition hover:bg-[var(--color-jade)] hover:text-[var(--color-paper)]"
+            >
+              {t.shopCta}
+            </a>
+          ) : (
+            <span className="rounded-full border border-[rgba(33,29,24,0.15)] px-5 py-2.5 text-xs tracking-wider text-[var(--color-ink-soft)]">
+              {t.shopSoon}
+            </span>
+          )}
+        </div>
       </div>
     </section>
   )
 }
 
-function Disclaimer({ t }) {
+function Disclaimer({ t, lang }) {
+  const pre = lang === 'en' ? '/en' : ''
   return (
     <section className="mx-auto max-w-3xl px-6 py-12 md:px-12">
       <div className="mb-8 rounded-2xl border border-[rgba(76,107,94,0.25)] bg-[rgba(76,107,94,0.06)] p-5 md:p-6">
         <h3 className="font-zh text-base font-semibold text-[var(--color-jade)]">{t.trustTitle}</h3>
         <p className="mt-2 text-sm leading-relaxed">{t.trustBody}</p>
-        <a href="/ai-notice/" className="mt-2 inline-block text-xs text-[var(--color-jade)] underline decoration-dotted underline-offset-4">{t.trustLink} →</a>
+        <a href={`${pre}/ai-notice/`} className="mt-2 inline-block text-xs text-[var(--color-jade)] underline decoration-dotted underline-offset-4">{t.trustLink} →</a>
       </div>
       <h3 className="font-zh mb-2 text-sm font-semibold tracking-wide text-[var(--color-ink-soft)]">{t.disclaimerTitle}</h3>
       <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.disclaimer}</p>
       <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
-        <a href="/terms/" className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{t.footTerms}</a>
+        <a href={`${pre}/terms/`} className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{t.footTerms}</a>
         {' · '}
-        <a href="/privacy/" className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{t.footPrivacy}</a>
+        <a href={`${pre}/privacy/`} className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{t.footPrivacy}</a>
         {' · '}
-        <a href="/ai-notice/" className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{t.footAi}</a>
+        <a href={`${pre}/ai-notice/`} className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{t.footAi}</a>
       </p>
     </section>
   )
@@ -813,14 +916,37 @@ function Disclaimer({ t }) {
 
 export default function App() {
   const urlSeed = useMemo(() => parseUrlSeed(), [])
-  const [lang, setLang] = useState('zh')
+  const [lang, setLangState] = useState(langFromPath)
   const [input, setInput] = useState(urlSeed?.input ?? null)
   const [activeTerm, setActiveTerm] = useState(null)
   const t = STRINGS[lang]
 
+  // 切换语言 = 切换到对应语言的独立入口（/ 或 /en/），保留命盘参数，地址可直接收藏分享
+  function setLang(next) {
+    setLangState(next)
+    try {
+      window.history.replaceState(null, '', langBase(next) + window.location.search + window.location.hash)
+    } catch (e) { /* 忽略 */ }
+    track('lang_switch', { to: next })
+  }
+
+  useEffect(() => {
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN'
+  }, [lang])
+
+  function submitChart(next) {
+    setInput(next)
+    track('chart_submit', { lang, hour_known: next.hourKnown !== false })
+  }
+
+  function openTerm(id) {
+    setActiveTerm(id)
+    track('term_open', { lang, term: id })
+  }
+
   const data = useMemo(() => {
     if (!input) return null
-    return computeBazi(input.y, input.m, input.d, input.hh, input.mm, input.gender, lang)
+    return computeBazi(input.y, input.m, input.d, input.hh, input.mm, input.gender, lang, input.hourKnown !== false)
   }, [input, lang])
 
   function scrollToForm() {
@@ -844,16 +970,18 @@ export default function App() {
     <div className="min-h-screen">
       <Header lang={lang} setLang={setLang} t={t} onHome={goHome} />
       <Hero t={t} lang={lang} onStart={scrollToForm} />
-      <BaziForm t={t} onSubmit={setInput} initial={urlSeed?.fields} />
-      {data && <Result key={lang + JSON.stringify(input)} data={data} input={input} t={t} lang={lang} onTerm={setActiveTerm} />}
-      <Support t={t} />
-      <Shop t={t} />
-      <Disclaimer t={t} />
+      <BaziForm t={t} onSubmit={submitChart} initial={urlSeed?.fields} />
+      {data && <Result key={lang + JSON.stringify(input)} data={data} input={input} t={t} lang={lang} onTerm={openTerm} />}
+      <Support t={t} lang={lang} />
+      <Shop t={t} lang={lang} />
+      <Disclaimer t={t} lang={lang} />
       <footer className="border-t border-[rgba(33,29,24,0.12)] px-6 py-8 text-center md:px-12">
         <p className="font-zh text-sm text-[var(--color-ink-soft)]">{t.footerTag}</p>
         <p className="mt-2 text-[11px] tracking-widest text-[var(--color-ink-soft)]">
-          <a href="/term/" className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{lang === 'en' ? 'Glossary' : '命理小词典'}</a>
-          {' · '}ONEMING · oneming.net
+          <a href={lang === 'en' ? '/en/term/' : '/term/'} className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{lang === 'en' ? 'Glossary' : '命理小词典'}</a>
+          {' · '}
+          <a href={lang === 'en' ? '/en/chinese-zodiac/' : '/shengxiao/'} className="underline decoration-dotted underline-offset-4 hover:text-[var(--color-jade)]">{lang === 'en' ? 'Chinese Zodiac' : '十二生肖'}</a>
+          {' · '}ONEMING · {SITE.domain}
         </p>
       </footer>
       {activeTerm && <TermModal id={activeTerm} lang={lang} t={t} onClose={() => setActiveTerm(null)} />}

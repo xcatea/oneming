@@ -9,9 +9,9 @@
   --color-jade-deep: #2f463c;
   --color-seal: #9e342a;
 
-  --font-serif-zh: "Noto Serif SC", serif;
+  --font-serif-zh: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
   --font-serif-en: "Spectral", Georgia, serif;
-  --font-ui: "Inter", system-ui, sans-serif;
+  --font-ui: "Inter", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 :root {
