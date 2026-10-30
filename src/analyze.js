@@ -109,8 +109,8 @@ export function analyzeChart(chart, lang = 'zh') {
     const min = Math.min(...Object.values(counts))
     favorEls = Object.keys(counts).filter((e) => counts[e] === min)
     avoidEls = []
-    favorShishenZh = '趋于平衡，缺什么补什么'
-    favorShishenEn = 'balanced — lean toward whatever is least present'
+    favorShishenZh = '补足盘中最少的五行（中和取平衡）'
+    favorShishenEn = 'whatever element is least present (keeping the balance)'
   }
   favorEls = [...new Set(favorEls)]
 
@@ -132,7 +132,7 @@ export function analyzeChart(chart, lang = 'zh') {
   const elNames = (arr) => arr.map((e) => (lang === 'en' ? EL_EN[e] : EL_ZH[e])).join(lang === 'en' ? ' / ' : '、')
 
   const favorLogic = lang === 'en'
-    ? `As a ${tierEn.toLowerCase()} Day Master, the chart leans toward ${favorShishenEn}, i.e. the elements ${elNames(favorEls)}.`
+    ? `As a ${tierEn.toLowerCase()} Day Master, the chart leans toward ${favorShishenEn}, i.e. ${favorEls.length > 1 ? 'the elements' : 'the element'} ${elNames(favorEls)}.`
     : `日主${tierZh}，喜用倾向于${favorShishenZh}，对应五行：${elNames(favorEls)}。`
 
   // 性格主述：基调 + 旺衰修饰
