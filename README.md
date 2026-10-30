@@ -1,6 +1,6 @@
 # 一命 · ONEMING
 
-**oneming.net** 是一个免费八字排盘与**命盘术语解释**工具。
+**oneming.net** 是一个免费八字排盘与**命盘术语解释**工具，中英双语（`/` 与 `/en/`）。
 
 输入出生时间后，系统在浏览器本地生成四柱八字、五行分布与十神关系，并解释命盘中出现的日主、旺衰、喜用神、正官、七杀、纳音等专业术语——从"一命二运三风水"开始，看懂自己的命盘。
 
@@ -22,15 +22,21 @@
 ## 目录
 
 ```
-src/            React 应用（排盘、解读、词条抽屉、卡片）
-  bazi.js       排盘引擎（四柱/五行/纳音）
-  analyze.js    解读引擎第①层：旺衰/喜用/性格（确定性规则）
-  reading.js    解读引擎第②层：AI 文笔（模型无关，含合规过滤与兜底）
-  terms.js      应用内词条（18 条）
-functions/      Cloudflare Pages Functions（DeepSeek 代理）
-scripts/        构建期静态页生成（词条/专题/信任页/sitemap）
-public/         静态资源（robots.txt / 404.html / 分享封面）
+src/
+  site.config.js  全站唯一配置（域名 / 变现链接 / 统计 ID，留空即隐藏）
+  wuxing.js       干支五行基础表（前端 / 构建 / 接口共用）
+  bazi.js         排盘引擎（四柱/五行/纳音，支持时辰未知）
+  analyze.js      解读引擎第①层：旺衰/喜用/性格（确定性规则）
+  reading.js      解读引擎第②层：AI 文笔（模型无关，含合规过滤与兜底）
+  track.js        事件埋点（不含出生信息）
+  terms.js        应用内词条（18 条）
+functions/        Cloudflare Pages Functions（DeepSeek 代理：只收干支、缓存、限流）
+scripts/          构建期静态页：词条 / 指南 / 生肖 / 年份 / 2027 专题 / 五行配色 / 英文版 / sitemap
+public/           静态资源（robots.txt / 404.html / _headers / 分享封面）
+docs/             产品圣经、路线图、知识规范、顶层设计与变现（Strategy.md）、上线配置清单（Operations.md）
 ```
+
+详见 [Architecture.md](Architecture.md)、[SEO.md](SEO.md)、[docs/Operations.md](docs/Operations.md)。
 
 ## 内容与合规口径
 
