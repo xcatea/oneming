@@ -67,23 +67,44 @@ function relationsOf(a) {
   }
 }
 
-// —— 生肖速查小工具（纯前端、无依赖；春节日期在构建时算好内联）——
+// —— 生肖速查小工具 + 生肖卡片（纯前端、无依赖；春节日期在构建时算好内联）——
 function lookupWidget(lang) {
   const data = []
   for (let Y = YEAR_FROM - 1; Y <= YEAR_TO; Y++) {
     const y = yearInfo(Y)
-    data.push([ymd(y.cny), Y, y.animal.id, lang === 'en' ? `${nameEn(y)} (${y.gz})` : `${y.gz} ${nameZh(y)}`, lang === 'en' ? y.animal.en : y.animal.zh])
+    data.push([ymd(y.cny), Y, y.animal.id, lang === 'en' ? `${nameEn(y)} (${y.gz})` : `${y.gz} ${nameZh(y)}`, lang === 'en' ? y.animal.en : y.animal.zh,
+      y.animal.zh, ELEMENT_META[y.el].color, lang === 'en' ? y.animal.kwEn : y.animal.kwZh, y.gz, lang === 'en' ? nameEn(y) : nameZh(y)])
   }
   const t = lang === 'en'
-    ? { lab: 'Enter your birth date', btn: 'Find my animal', res: 'You are a', yr: 'See your year', range: `Supports ${YEAR_FROM}–${YEAR_TO}.` }
-    : { lab: '输入公历生日', btn: '查生肖', res: '你属', yr: '查看这一年', range: `支持 ${YEAR_FROM}—${YEAR_TO} 年。` }
+    ? { lab: 'Enter your birth date', btn: 'Find my animal', res: 'You are a', yr: 'See your year', range: `Supports ${YEAR_FROM}–${YEAR_TO}.`, card: 'Make my zodiac card', save: 'Save image', me: 'I am a', foot: 'Find yours at', url: `${SITE.domain}/en/chinese-zodiac` }
+    : { lab: '输入公历生日', btn: '查生肖', res: '你属', yr: '查看这一年', range: `支持 ${YEAR_FROM}—${YEAR_TO} 年。`, card: '生成我的生肖卡片', save: '保存图片', me: '我属', foot: '查你的生肖', url: `${SITE.domain}/shengxiao` }
   const base = lang === 'en' ? '/en/chinese-zodiac/' : '/shengxiao/'
+  const btnCss = 'padding:9px 18px;border:0;border-radius:999px;background:#4c6b5e;color:#ece5d6;font:inherit;cursor:pointer'
   return `<div class="box" id="zodiac-lookup"><div class="lab">${t.lab}</div>
 <form onsubmit="return zl(event)" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
 <input type="date" id="zl-d" required min="${YEAR_FROM}-01-01" max="${YEAR_TO}-12-31" value="1990-06-15" style="padding:8px 10px;border:1px solid rgba(33,29,24,.2);border-radius:8px;background:rgba(255,255,255,.6);font:inherit">
-<button style="padding:9px 18px;border:0;border-radius:999px;background:#4c6b5e;color:#ece5d6;font:inherit;cursor:pointer">${t.btn}</button></form>
-<p id="zl-r" style="margin:10px 0 0;font-size:17px"></p><p class="src" style="margin:4px 0 0">${t.range}</p></div>
-<script>var ZD=${JSON.stringify(data)};function zl(e){e.preventDefault();var v=document.getElementById('zl-d').value,h=null;for(var i=0;i<ZD.length;i++){if(ZD[i][0]<=v)h=ZD[i];else break}var r=document.getElementById('zl-r');if(!h){r.textContent='';return false}r.innerHTML='${t.res} <strong>'+h[4]+'</strong> · '+h[3]+' · <a href="${base}'+h[2]+'/">'+h[4]+' →</a>'+(h[1]>=${YEAR_FROM}?' · <a href="${base}'+h[1]+'/">${t.yr} '+h[1]+' →</a>':'');if(window.gtag)gtag('event','zodiac_lookup',{lang:'${lang}'});return false}</script>`
+<button style="${btnCss}">${t.btn}</button></form>
+<p id="zl-r" style="margin:10px 0 0;font-size:17px"></p>
+<div id="zl-card" style="display:none;margin-top:12px"><button type="button" id="zl-mk" onclick="zc()" style="${btnCss};background:#211d18">${t.card}</button>
+<div id="zl-out" style="display:none;margin-top:12px"><canvas id="zl-cv" width="1080" height="1440" style="width:100%;max-width:360px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.12);display:block"></canvas>
+<a id="zl-dl" download="zodiac-card.png" style="display:inline-block;margin-top:10px;${btnCss};text-decoration:none">${t.save}</a></div></div>
+<p class="src" style="margin:4px 0 0">${t.range}</p></div>
+<script>var ZD=${JSON.stringify(data)},ZH=null;
+function zl(e){e.preventDefault();var v=document.getElementById('zl-d').value,h=null;for(var i=0;i<ZD.length;i++){if(ZD[i][0]<=v)h=ZD[i];else break}var r=document.getElementById('zl-r');ZH=h;document.getElementById('zl-out').style.display='none';if(!h){r.textContent='';document.getElementById('zl-card').style.display='none';return false}r.innerHTML='${t.res} <strong>'+h[4]+'</strong> · '+h[3]+' · <a href="${base}'+h[2]+'/">'+h[4]+' →</a>'+(h[1]>=${YEAR_FROM}?' · <a href="${base}'+h[1]+'/">${t.yr} '+h[1]+' →</a>':'');document.getElementById('zl-card').style.display='block';if(window.gtag)gtag('event','zodiac_lookup',{lang:'${lang}'});return false}
+function zc(){if(!ZH)return;var c=document.getElementById('zl-cv'),x=c.getContext('2d'),W=1080,H=1440,S='"Noto Serif SC","Songti SC","STSong","SimSun",Georgia,serif';
+x.fillStyle='#ece5d6';x.fillRect(0,0,W,H);x.fillStyle='rgba(0,0,0,.02)';x.beginPath();x.arc(W*.85,H*.12,300,0,7);x.fill();x.beginPath();x.arc(W*.1,H*.88,280,0,7);x.fill();
+x.strokeStyle='rgba(33,29,24,.14)';x.lineWidth=2;x.strokeRect(40,40,W-80,H-80);
+x.fillStyle='#9e342a';x.fillRect(90,90,84,84);x.fillStyle='#f3ece1';x.font='700 50px '+S;x.textAlign='center';x.textBaseline='middle';x.fillText('命',132,134);
+x.textBaseline='alphabetic';x.textAlign='left';x.fillStyle='#211d18';x.font='700 40px '+S;x.fillText('ONEMING',196,136);x.fillStyle='#6b6457';x.font='400 24px '+S;x.fillText('${lang === 'en' ? 'Chinese Zodiac' : '一 命 · 生 肖'}',198,170);
+x.textAlign='center';x.fillStyle='#6b6457';x.font='400 44px '+S;x.fillText('${t.me}',W/2,380);
+x.fillStyle=ZH[6];x.font='900 400px '+S;x.fillText(ZH[5],W/2,760);
+x.fillStyle='#211d18';x.font='700 64px '+S;x.fillText(${lang === 'en' ? "ZH[9]" : "ZH[8]+' · '+ZH[9]"},W/2,900);
+${lang === 'en' ? "x.fillStyle='#6b6457';x.font='400 40px '+S;x.fillText(ZH[8],W/2,965);" : ''}
+x.strokeStyle='rgba(76,107,94,.5)';x.beginPath();x.moveTo(W/2-60,1020);x.lineTo(W/2+60,1020);x.stroke();
+x.fillStyle='#4c6b5e';x.font='400 50px '+S;x.fillText(ZH[7],W/2,1110);
+x.fillStyle='#4c6b5e';x.font='700 36px '+S;x.fillText('${t.url}',W/2,1360);x.fillStyle='#6b6457';x.font='400 26px '+S;x.fillText('${t.foot} →',W/2,1306);
+document.getElementById('zl-out').style.display='block';try{document.getElementById('zl-dl').href=c.toDataURL('image/png')}catch(e){}
+if(window.gtag)gtag('event','zodiac_card',{lang:'${lang}',animal:ZH[2]})}</script>`
 }
 
 // ================= 生肖总览 =================
@@ -347,6 +368,8 @@ function fireGoatZh() {
 <div class="en">${dZh(y.cny)} 起 · 纳音天河水</div>
 <p class="def">2027年是农历<strong>丁未年</strong>，生肖属<a href="/shengxiao/goat/">羊</a>。天干"丁"属阴火，地支"未"属土、对应羊，所以俗称<strong>火羊年</strong>。它接在2026年丙午火马年之后，从<strong>${dZh(y.cny)}</strong>（春节）开始。</p>
 <div class="facts"><div><b>干支</b><span>丁未</span></div><div><b>生肖</b><span>羊</span></div><div><b>年干</b><span>丁 · 阴火</span></div><div><b>年支</b><span>未 · 阴土</span></div><div><b>纳音</b><span>${y.nayin}</span></div><div><b>春节</b><span>${y.cny.getMonth()}月${y.cny.getDay()}日</span></div></div>
+<h2 class="sec">查你的生肖，生成生肖卡片</h2>
+${lookupWidget('zh')}
 <h2 class="sec">丁未年从哪天到哪天？</h2>
 <p>民俗按春节换年：丁未年从 ${dZh(y.cny)} 开始，到 ${dZh(y.end)}（除夕）结束。八字排盘按立春换年：2027年立春在 ${dZh(y.lichun)} ${tHm(y.lichun)}（北京时间），比春节早两天。所以 ${y.lichun.getMonth()}月${y.lichun.getDay()}日立春到${y.cny.getMonth()}月${y.cny.getDay() - 1}日之间出生的宝宝，民俗属马，八字年柱却已是丁未。</p>
 <h2 class="sec">"丁未"是什么意思？</h2>
@@ -385,6 +408,8 @@ function fireGoatEn() {
 <div class="en">Chinese New Year: ${dEn(y.cny)} · 丁未 Ding-Wei</div>
 <p class="def">Chinese New Year 2027 falls on <strong>${dEn(y.cny)}</strong>, opening the <strong>Year of the Fire Goat</strong>. Its stem-branch is 丁未 (Ding-Wei): Ding is Yin Fire, and Wei is the Earthly Branch of the <a href="/en/chinese-zodiac/goat/">Goat</a>. It follows 2026, the Year of the Fire Horse.</p>
 <div class="facts"><div><b>Animal</b><span>Goat</span></div><div><b>Stem</b><span>Ding · Yin Fire</span></div><div><b>Branch</b><span>Wei · Yin Earth</span></div><div><b>Na Yin</b><span>${y.nayin}</span></div><div><b>Starts</b><span>Feb ${y.cny.getDay()}, 2027</span></div><div><b>Ends</b><span>${MONTHS_EN[y.end.getMonth() - 1].slice(0, 3)} ${y.end.getDay()}, ${y.end.getYear()}</span></div></div>
+<h2 class="sec">Find your animal &amp; make a zodiac card</h2>
+${lookupWidget('en')}
 <h2 class="sec">When does the Year of the Goat start?</h2>
 <p>By folk custom the Goat year runs from ${dEn(y.cny)} to ${dEn(y.end)}. BaZi astrology switches years at Lichun, the Start of Spring — in 2027 that’s ${dEn(y.lichun)} at ${tHm(y.lichun)} Beijing time, two days <em>before</em> New Year. A baby born on February 4 or 5, 2027 is a Horse by custom but already has a Ding-Wei year pillar in BaZi.</p>
 <h2 class="sec">What does Ding-Wei mean?</h2>
