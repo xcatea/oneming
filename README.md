@@ -1,13 +1,13 @@
 # 一命 · ONEMING
 
-**oneming.net** 是一个免费八字排盘与**命盘术语解释**工具。
+**oneming.net** 是一个免费八字排盘与**命盘术语解释**工具，中英双语（`/` 与 `/en/`）。
 
 输入出生时间后，系统在浏览器本地生成四柱八字、五行分布与十神关系，并解释命盘中出现的日主、旺衰、喜用神、正官、七杀、纳音等专业术语——从"一命二运三风水"开始，看懂自己的命盘。
 
 ## 核心定位
 
 - "一命二运三风水"的现代文化解释
-- 免费八字排盘（永远免费）
+- 免费八字排盘（永远免费），支持公历/农历、时辰未知、出生地真太阳时（国内区县 + 海外城市）、历史夏令时
 - 命盘专业术语自动识别与解释
 - 出生信息在浏览器本地计算，不注册、不存储
 - **不预测吉凶，不售卖改运服务**——只谈性格倾向，供文化与自我认知参考
@@ -22,16 +22,29 @@
 ## 目录
 
 ```
-src/            React 应用（排盘、解读、词条抽屉、卡片）
-  bazi.js       排盘引擎（四柱/五行/纳音）
-  analyze.js    解读引擎第①层：旺衰/喜用/性格（确定性规则）
-  reading.js    解读引擎第②层：AI 文笔（模型无关，含合规过滤与兜底）
-  terms.js      应用内词条（18 条）
-functions/      Cloudflare Pages Functions（DeepSeek 代理）
-scripts/        构建期静态页生成（词条/专题/信任页/sitemap）
-public/         静态资源（robots.txt / 404.html / 分享封面）
+src/
+  site.config.js  全站唯一配置（域名 / 变现链接 / 统计 ID，留空即隐藏）
+  wuxing.js       干支五行基础表（前端 / 构建 / 接口共用）
+  bazi.js         排盘引擎（四柱/五行/纳音，支持时辰未知、农历换算）
+  timefix.js      出生时间校正（真太阳时、夏令时、海外时区）
+  places.js       出生地经度表（国内 484 市/区县 + 海外 72 城）
+  analyze.js      解读引擎第①层：旺衰/喜用/性格（确定性规则）
+  reading.js      解读引擎第②层：AI 文笔（模型无关，含合规过滤与兜底）
+  track.js        事件埋点（不含出生信息）
+  terms.js        应用内词条（18 条）
+functions/        Cloudflare Pages Functions（DeepSeek 代理：只收干支、缓存、限流）
+scripts/          构建期静态页：词条 / 指南 / 生肖 / 年份 / 2027 专题 / 五行配色 / 英文版 / sitemap
+tests/            回归测试（npm test）
+public/           静态资源（robots.txt / 404.html / _headers / 分享封面）
+docs/             产品圣经、路线图、知识规范、顶层设计与变现（Strategy.md）、上线配置清单（Operations.md）
 ```
+
+详见 [Architecture.md](Architecture.md)、[SEO.md](SEO.md)、[docs/Operations.md](docs/Operations.md)。
 
 ## 内容与合规口径
 
 词条与解读框架源出公有古籍（《渊海子平》《滴天髓》《三命通会》等），以现代语言原创撰写并标注出处。全站红线：**只解释、只谈性格倾向，不预测吉凶、不恐吓、不改运、不带货开光。** 详见站内 [用户协议](https://oneming.net/terms/) · [隐私说明](https://oneming.net/privacy/) · [AI 生成说明](https://oneming.net/ai-notice/)。
+
+## 致谢
+
+出生地经度表与中国夏令时口径参考了开源项目 [Renhuai123/ziwei-doushu](https://github.com/Renhuai123/ziwei-doushu)（MIT），感谢其整理与核对工作。
