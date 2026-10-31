@@ -1,22 +1,9 @@
-// 一命 · 出生时间校正：真太阳时 + 中国历史夏令时（1935–1991）
+// 一命 · 出生时间校正：出生地真太阳时 + 夏令时 / 旧时区（中国大陆按通行口径表，港澳台与海外按 IANA 时区）
 // 时柱以"太阳时"为准：北京时间是东经 120° 的标准时，出生地经度每差 1° 差 4 分钟，
 // 再加上一年里地球轨道带来的"时差"（均时差，约 −14 到 +16 分钟）。
 // 夏令时：只提示、由用户勾选确认后才减 1 小时，默认不改。
 
-// 常用出生地（经度，东经为正）。按拼音顺序便于查找。
-export const CITIES = [
-  ['beijing', '北京', 116.41], ['shanghai', '上海', 121.47], ['tianjin', '天津', 117.2], ['chongqing', '重庆', 106.55],
-  ['guangzhou', '广州', 113.26], ['shenzhen', '深圳', 114.06], ['hangzhou', '杭州', 120.16], ['nanjing', '南京', 118.8],
-  ['suzhou', '苏州', 120.62], ['wuhan', '武汉', 114.31], ['chengdu', '成都', 104.07], ['xian', '西安', 108.94],
-  ['zhengzhou', '郑州', 113.63], ['changsha', '长沙', 112.94], ['jinan', '济南', 117.0], ['qingdao', '青岛', 120.38],
-  ['shijiazhuang', '石家庄', 114.51], ['taiyuan', '太原', 112.55], ['hefei', '合肥', 117.23], ['nanchang', '南昌', 115.86],
-  ['fuzhou', '福州', 119.3], ['xiamen', '厦门', 118.09], ['nanning', '南宁', 108.37], ['haikou', '海口', 110.2],
-  ['kunming', '昆明', 102.83], ['guiyang', '贵阳', 106.63], ['lanzhou', '兰州', 103.83], ['xining', '西宁', 101.78],
-  ['yinchuan', '银川', 106.23], ['huhehaote', '呼和浩特', 111.75], ['shenyang', '沈阳', 123.43], ['dalian', '大连', 121.61],
-  ['changchun', '长春', 125.32], ['haerbin', '哈尔滨', 126.53], ['wulumuqi', '乌鲁木齐', 87.62], ['lasa', '拉萨', 91.13],
-  ['xianggang', '香港', 114.17], ['aomen', '澳门', 113.54], ['taibei', '台北', 121.56],
-]
-export const CITY_BY_ID = Object.fromEntries(CITIES.map(([id, zh, lon]) => [id, { id, zh, lon }]))
+import { placeById } from './places.js'
 
 function dayOfYear(y, m, d) {
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1)) / 86400000) + 1
@@ -50,29 +37,73 @@ export function inChinaDST(y, m, d) {
   return v >= r[1] * 100 + r[2] && v <= r[3] * 100 + r[4]
 }
 
-function shift(y, m, d, hh, mm, minutes) {
-  const t = new Date(Date.UTC(y, m - 1, d, hh, mm) + Math.round(minutes) * 60000)
-  return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate(), hh: t.getUTCHours(), mm: t.getUTCMinutes() }
+// —— 海外时区（浏览器内置 IANA 时区库，含历史夏令时与旧时区）——
+function zoneOffsetAtUTC(tz, utcMs) {
+  const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' })
+  const p = Object.fromEntries(f.formatToParts(new Date(utcMs)).map((x) => [x.type, x.value]))
+  const asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute)
+  return Math.round((asUTC - Math.floor(utcMs / 60000) * 60000) / 60000)
+}
+// 当地钟表时间 → 当时实际的 UTC 偏移（分钟）
+export function zoneOffsetForLocal(tz, y, m, d, hh, mm) {
+  const local = Date.UTC(y, m - 1, d, hh, mm)
+  let off = zoneOffsetAtUTC(tz, local)
+  off = zoneOffsetAtUTC(tz, local - off * 60000)
+  return off
+}
+// 当年的标准偏移（冬夏两个时刻里较小的那个）
+export function zoneStandardOffset(tz, y) {
+  return Math.min(zoneOffsetAtUTC(tz, Date.UTC(y, 0, 15, 12)), zoneOffsetAtUTC(tz, Date.UTC(y, 6, 15, 12)))
 }
 
 /**
- * 把用户填的北京时间换算成排盘用的时间
- * @param input { y,m,d,hh,mm, city?:cityId, dst?:boolean }
- * @returns { y,m,d,hh,mm, notes:{ dst?:true, solar?:{ city, lon, offset } } }
+ * 出生地提示信息（表单用）：这天是否在夏令时 / 非标准时间
+ * @returns { kind: 'cn-dst' | 'zone-dst' | null, diff?: 分钟 }
+ */
+export function placeClockHint(placeId, y, m, d, hh, mm) {
+  const place = placeById(placeId)
+  if (!place || place.cn) return inChinaDST(y, m, d) ? { kind: 'cn-dst', diff: 60 } : null
+  try {
+    const diff = zoneOffsetForLocal(place.tz, y, m, d, hh, mm) - zoneStandardOffset(place.tz, y)
+    return diff ? { kind: 'zone-dst', diff } : null
+  } catch (e) { return null }
+}
+
+/**
+ * 把用户填的出生钟表时间换算成排盘用的"出生地真太阳时"
+ * @param input { y,m,d,hh,mm, place?: placeId, dst?: boolean }
+ *   - 不选出生地：按北京时间，不做经度校正（夏令时仍可勾选扣除）
+ *   - 中国大陆：东八区 + 经度差 + 均时差；夏令时按通行口径表，用户勾选才扣
+ *   - 港澳台与海外：用 IANA 时区；勾选 dst 时按当年实际钟表规则换算（含夏令时、旧时区），否则按当年标准时区
+ * @returns { y,m,d,hh,mm, notes:{ dst?, solar?:{ place, lon, offset } } }
  */
 export function correctTime(input) {
-  let t = { y: input.y, m: input.m, d: input.d, hh: input.hh, mm: input.mm }
+  const { y, m, d, hh, mm } = input
   const notes = {}
-  // 夏令时只在用户确认"填的是当年钟表时间"时才减 1 小时（程序无法替用户判断）
-  if (input.dst && inChinaDST(t.y, t.m, t.d)) {
-    t = shift(t.y, t.m, t.d, t.hh, t.mm, -60)
-    notes.dst = true
+  const place = placeById(input.place)
+  let utc
+  if (!place || place.cn) {
+    let off = 480
+    if (input.dst && inChinaDST(y, m, d)) { off = 540; notes.dst = 60 }
+    utc = Date.UTC(y, m - 1, d, hh, mm) - off * 60000
+    if (!place) {
+      const t = new Date(utc + 480 * 60000)
+      return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate(), hh: t.getUTCHours(), mm: t.getUTCMinutes(), notes }
+    }
+  } else {
+    let off = zoneStandardOffset(place.tz, y)
+    if (input.dst) {
+      const actual = zoneOffsetForLocal(place.tz, y, m, d, hh, mm)
+      if (actual !== off) { notes.dst = actual - off; off = actual }
+    }
+    utc = Date.UTC(y, m - 1, d, hh, mm) - off * 60000
   }
-  const city = input.city && CITY_BY_ID[input.city]
-  if (city) {
-    const offset = (city.lon - 120) * 4 + equationOfTime(t.y, t.m, t.d, t.hh + t.mm / 60)
-    t = shift(t.y, t.m, t.d, t.hh, t.mm, offset)
-    notes.solar = { city: city.zh, lon: city.lon, offset: Math.round(offset) }
-  }
-  return { ...t, notes }
+  // 地方平太阳时 = UTC + 经度 × 4 分钟；再加均时差得真太阳时
+  const lmt = utc + place.lon * 4 * 60000
+  const lt = new Date(lmt)
+  const eot = equationOfTime(lt.getUTCFullYear(), lt.getUTCMonth() + 1, lt.getUTCDate(), lt.getUTCHours() + lt.getUTCMinutes() / 60)
+  const t = new Date(Math.round((lmt + eot * 60000) / 60000) * 60000)
+  const offset = Math.round((t.getTime() - Date.UTC(y, m - 1, d, hh, mm)) / 60000)
+  notes.solar = { place: place.zh, placeEn: place.en, lon: place.lon, offset }
+  return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate(), hh: t.getUTCHours(), mm: t.getUTCMinutes(), notes }
 }

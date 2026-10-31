@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { STRINGS } from './strings.js'
 import { computeBazi, ELEMENTS, ELEMENT_META, LUNAR_MONTH_ZH, LUNAR_DAY_ZH, lunarLeapMonth, lunarMonthDays, lunarToSolar, solarToLunar } from './bazi.js'
-import { CITIES, CITY_BY_ID, correctTime, inChinaDST } from './timefix.js'
+import { correctTime, placeClockHint } from './timefix.js'
+import { CN_PROVINCES, WORLD_REGIONS, placeById } from './places.js'
 import { analyzeChart } from './analyze.js'
 import { generateReading, fallbackProse, validateReading } from './reading.js'
 import { TERM_BY_ID } from './terms.js'
@@ -109,14 +110,14 @@ function parseUrlSeed() {
     const hourKnown = rawT !== 'unknown'
     const tm = hourKnown ? rawT : '12:00'
     const g = p.get('g') === 'female' ? 'female' : 'male'
-    const city = CITY_BY_ID[p.get('c')] ? p.get('c') : ''
-    const dst = p.get('dst') === '1'
+    const place = placeById(p.get('c')) ? p.get('c') : ''
+    const dst = p.get('dst') === '1' ? true : p.get('dst') === '0' ? false : null
     const [y, m, dd] = d.split('-').map(Number)
     const [hh, mm] = tm.split(':').map(Number)
     if (!y || !m || !dd) return null
     return {
-      input: { y, m, d: dd, hh: hh || 0, mm: mm || 0, gender: g, hourKnown, city, dst },
-      fields: { date: d, time: tm, gender: g, hourKnown, city, dst },
+      input: { y, m, d: dd, hh: hh || 0, mm: mm || 0, gender: g, hourKnown, place, dst: dst ?? defaultDst(place, y, m, dd, hh || 0, mm || 0), dstShown: !!placeClockHint(place, y, m, dd, hh || 0, mm || 0) },
+      fields: { date: d, time: tm, gender: g, hourKnown, place, dst },
     }
   } catch (e) {
     return null
@@ -126,7 +127,7 @@ function parseUrlSeed() {
 function buildShareUrl(input, lang) {
   const d = `${input.y}-${String(input.m).padStart(2, '0')}-${String(input.d).padStart(2, '0')}`
   const tm = input.hourKnown === false ? 'unknown' : `${String(input.hh).padStart(2, '0')}:${String(input.mm).padStart(2, '0')}`
-  const extra = (input.city ? `&c=${input.city}` : '') + (input.dst ? '&dst=1' : '')
+  const extra = (input.place ? `&c=${encodeURIComponent(input.place)}` : '') + (input.dstShown ? `&dst=${input.dst ? 1 : 0}` : '')
   return `${window.location.origin}${langBase(lang)}?d=${d}&t=${tm}&g=${input.gender}${extra}`
 }
 
@@ -216,6 +217,34 @@ const inputCls =
   'w-full rounded-lg border border-[rgba(33,29,24,0.18)] bg-[rgba(255,255,255,0.5)] px-3 py-2.5 text-[var(--color-ink)] outline-none transition focus:border-[var(--color-jade)]'
 
 const pad2 = (n) => String(n).padStart(2, '0')
+
+// 夏令时默认值：中国大陆不默认扣（主流排盘口径，由用户确认）；港澳台与海外按时区库默认按当年钟表规则换算
+function defaultDst(place, y, m, d, hh, mm) {
+  const h = placeClockHint(place, y, m, d, hh, mm)
+  return !!h && h.kind === 'zone-dst'
+}
+
+// 出生地分组：中文版 = 中国各省 + 海外各洲；英文版 = 海外各洲 + 中国（各省第一个城市，多为省会）
+function placeGroups(lang) {
+  const cn = CN_PROVINCES.map((p) => ({
+    key: 'cn:' + p.name,
+    label: p.name,
+    items: p.cities.map((c) => ({ id: `cn:${p.name}:${c.name}`, label: c.name })),
+  }))
+  const world = WORLD_REGIONS.map((r) => ({
+    key: 'w:' + r.en,
+    label: lang === 'en' ? r.en : `海外 · ${r.zh}`,
+    items: r.cities.map((c) => ({ id: `w:${c.en}`, label: lang === 'en' ? c.en : c.zh })),
+  }))
+  if (lang !== 'en') return [...cn, ...world]
+  const china = { key: 'cn:all', label: 'China', items: CN_PROVINCES.map((p) => ({ id: `cn:${p.name}:${p.cities[0].name}`, label: `${p.cities[0].name} (${p.name})` })) }
+  return [...world, china]
+}
+function groupOfPlace(groups, id) {
+  if (!id) return ''
+  const g = groups.find((x) => x.items.some((i) => i.id === id))
+  return g ? g.key : ''
+}
 const LUNAR_YEARS = Array.from({ length: 2099 - 1901 + 1 }, (_, i) => 1901 + i)
 
 function BaziForm({ t, lang, onSubmit, initial }) {
@@ -227,8 +256,10 @@ function BaziForm({ t, lang, onSubmit, initial }) {
   const [time, setTime] = useState(initial?.time || '14:30')
   const [gender, setGender] = useState(initial?.gender || 'male')
   const [hourUnknown, setHourUnknown] = useState(initial?.hourKnown === false)
-  const [city, setCity] = useState(initial?.city || '')
-  const [dst, setDst] = useState(initial?.dst ?? false)
+  const groups = useMemo(() => placeGroups(lang), [lang])
+  const [place, setPlace] = useState(initial?.place || '')
+  const [region, setRegion] = useState(() => groupOfPlace(groups, initial?.place))
+  const [dstChoice, setDstChoice] = useState(initial?.dst ?? null) // null = 按默认
   const isZh = lang !== 'en'
 
   // 当前选择对应的公历日期
@@ -244,7 +275,11 @@ function BaziForm({ t, lang, onSubmit, initial }) {
     return y && m && d ? { y, m, d } : null
   }, [cal, date, ly, lmNum, lmLeap, ld])
   const [hh, mm] = time.split(':').map(Number)
-  const showDst = isZh && !hourUnknown && solar && inChinaDST(solar.y, solar.m, solar.d)
+  // 只有选了出生地（或中文版不选出生地时的大陆夏令时）才提示
+  const hint = !hourUnknown && solar && (place || isZh) ? placeClockHint(place, solar.y, solar.m, solar.d, hh || 0, mm || 0) : null
+  const showDst = !!hint
+  const dst = dstChoice ?? (hint?.kind === 'zone-dst')
+  const regionGroup = groups.find((g) => g.key === region)
 
   function switchCal(next) {
     if (next === cal || !solar) { setCal(next); return }
@@ -263,8 +298,9 @@ function BaziForm({ t, lang, onSubmit, initial }) {
     onSubmit({
       y: solar.y, m: solar.m, d: solar.d, hh: hh || 0, mm: mm || 0, gender,
       hourKnown: !hourUnknown,
-      city: isZh && !hourUnknown ? city : '',
+      place: hourUnknown ? '' : place,
       dst: showDst ? dst : false,
+      dstShown: showDst,
       lunarInput: cal === 'lunar',
     })
   }
@@ -321,21 +357,30 @@ function BaziForm({ t, lang, onSubmit, initial }) {
               <option value="female">{t.female}</option>
             </select>
           </Field>
-          {isZh && (
-            <Field label={t.birthPlace}>
-              <select id="birth-city" value={city} disabled={hourUnknown} onChange={(e) => setCity(e.target.value)} className={`${inputCls} disabled:opacity-40`}>
+          <Field label={t.birthPlace}>
+            <span className="grid grid-cols-2 gap-1.5">
+              <select id="birth-region" aria-label={t.birthRegion} value={region} disabled={hourUnknown}
+                onChange={(e) => { const k = e.target.value; setRegion(k); const g = groups.find((x) => x.key === k); setPlace(g ? g.items[0].id : ''); setDstChoice(null) }}
+                className={`${inputCls} px-2 disabled:opacity-40`}>
                 <option value="">{t.birthPlaceNone}</option>
-                {CITIES.map(([id, zh]) => <option key={id} value={id}>{zh}</option>)}
+                {groups.map((g) => <option key={g.key} value={g.key}>{g.label}</option>)}
               </select>
-            </Field>
-          )}
+              <select id="birth-city" aria-label={t.birthCity} value={place} disabled={hourUnknown || !regionGroup}
+                onChange={(e) => { setPlace(e.target.value); setDstChoice(null) }}
+                className={`${inputCls} px-2 disabled:opacity-40`}>
+                {!regionGroup && <option value="">—</option>}
+                {regionGroup && regionGroup.items.map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}
+              </select>
+            </span>
+            <span className="mt-1.5 block text-xs text-[var(--color-ink-soft)]">{t.birthPlaceHint}</span>
+          </Field>
           {showDst && (
             <label className="flex items-start gap-1.5 text-xs leading-relaxed text-[var(--color-ink-soft)] sm:col-span-2">
-              <input id="dst-fix" type="checkbox" checked={dst} onChange={(e) => setDst(e.target.checked)} className="mt-0.5 accent-[var(--color-jade)]" />
-              <span>{t.dstLabel}</span>
+              <input id="dst-fix" type="checkbox" checked={dst} onChange={(e) => setDstChoice(e.target.checked)} className="mt-0.5 accent-[var(--color-jade)]" />
+              <span>{hint.kind === 'cn-dst' ? t.dstLabel : t.zoneDstLabel.replace('{n}', String(hint.diff))}</span>
             </label>
           )}
-          <div className={`flex items-end ${isZh ? 'sm:col-span-2' : ''}`}>
+          <div className="flex items-end sm:col-span-2">
             <button onClick={handle} className="w-full rounded-lg bg-[var(--color-jade)] px-5 py-2.5 text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]">
               {t.submit}
             </button>
@@ -885,8 +930,10 @@ function Result({ data, input, t, lang, onTerm }) {
 
         {data.fix?.changed && (
           <p className="mt-2 text-xs leading-relaxed text-[var(--color-jade)]" id="time-fix-note">
-            {data.fix.dst && <span>{t.resultDst} </span>}
-            {data.fix.solar && <span>{t.resultSolarTime} {data.fix.time}（{data.fix.solar.city}，东经 {data.fix.solar.lon}°，{data.fix.solar.offset >= 0 ? '+' : ''}{data.fix.solar.offset} 分钟）</span>}
+            {data.fix.dst && <span>{t.resultDst.replace('{n}', String(data.fix.dst))} </span>}
+            {data.fix.solar && <span>{t.resultSolarTime} {data.fix.time}{lang === 'en'
+              ? ` (${data.fix.solar.placeEn}, ${Math.abs(data.fix.solar.lon)}°${data.fix.solar.lon >= 0 ? 'E' : 'W'}, ${data.fix.solar.offset >= 0 ? '+' : ''}${data.fix.solar.offset} min)`
+              : `（${data.fix.solar.place}，${data.fix.solar.lon >= 0 ? '东经' : '西经'} ${Math.abs(data.fix.solar.lon)}°，${data.fix.solar.offset >= 0 ? '+' : ''}${data.fix.solar.offset} 分钟）`}</span>}
             {!data.fix.solar && <span>{t.resultUsedTime} {data.fix.time}</span>}
           </p>
         )}
@@ -1034,7 +1081,7 @@ export default function App() {
 
   function submitChart(next) {
     setInput(next)
-    track('chart_submit', { lang, hour_known: next.hourKnown !== false, lunar_input: !!next.lunarInput, solar_time: !!next.city })
+    track('chart_submit', { lang, hour_known: next.hourKnown !== false, lunar_input: !!next.lunarInput, solar_time: !!next.place, overseas: (next.place || '').startsWith('w:') })
   }
 
   function openTerm(id) {
@@ -1071,7 +1118,7 @@ export default function App() {
     <div className="min-h-screen">
       <Header lang={lang} setLang={setLang} t={t} onHome={goHome} />
       <Hero t={t} lang={lang} onStart={scrollToForm} />
-      <BaziForm key={lang} t={t} lang={lang} onSubmit={submitChart} initial={input ? { date: `${input.y}-${pad2(input.m)}-${pad2(input.d)}`, time: `${pad2(input.hh)}:${pad2(input.mm)}`, gender: input.gender, hourKnown: input.hourKnown, city: input.city, dst: input.dst } : urlSeed?.fields} />
+      <BaziForm key={lang} t={t} lang={lang} onSubmit={submitChart} initial={input ? { date: `${input.y}-${pad2(input.m)}-${pad2(input.d)}`, time: `${pad2(input.hh)}:${pad2(input.mm)}`, gender: input.gender, hourKnown: input.hourKnown, place: input.place, dst: input.dstShown ? input.dst : null } : urlSeed?.fields} />
       {data && <Result key={lang + JSON.stringify(input)} data={data} input={input} t={t} lang={lang} onTerm={openTerm} />}
       <Support t={t} lang={lang} />
       <Shop t={t} lang={lang} />
