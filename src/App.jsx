@@ -204,13 +204,13 @@ function Hero({ t, lang, onStart }) {
   )
 }
 
-function Field({ label, children }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm text-[var(--color-ink-soft)]">{label}</span>
-      {children}
-    </label>
-  )
+// wide：在两列布局里占满一整行；group：里面有多个控件时用 div，避免点标题只聚焦第一个
+function Field({ label, children, wide = false, group = false }) {
+  const cls = `block min-w-0 ${wide ? 'sm:col-span-2' : ''}`
+  const head = <span className="mb-1.5 block text-sm text-[var(--color-ink-soft)]">{label}</span>
+  return group
+    ? <div role="group" aria-label={label} className={cls}>{head}{children}</div>
+    : <label className={cls}>{head}{children}</label>
 }
 
 const inputCls =
@@ -307,8 +307,8 @@ function BaziForm({ t, lang, onSubmit, initial }) {
 
   const monthOptions = []
   for (let m = 1; m <= 12; m++) {
-    monthOptions.push({ v: String(m), label: isZh ? `${LUNAR_MONTH_ZH[m - 1]}月` : `Month ${m}` })
-    if (leap === m) monthOptions.push({ v: 'L' + m, label: isZh ? `闰${LUNAR_MONTH_ZH[m - 1]}月` : `Leap month ${m}` })
+    monthOptions.push({ v: String(m), label: isZh ? `${LUNAR_MONTH_ZH[m - 1]}月` : `M${m}` })
+    if (leap === m) monthOptions.push({ v: 'L' + m, label: isZh ? `闰${LUNAR_MONTH_ZH[m - 1]}月` : `Leap M${m}` })
   }
   const segBtn = (on) => `rounded-full px-3.5 py-1 text-sm transition ${on ? 'bg-[var(--color-jade)] text-[var(--color-paper)]' : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'}`
 
@@ -325,19 +325,19 @@ function BaziForm({ t, lang, onSubmit, initial }) {
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-soft)]">{t.formHint}</p>
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
           {cal === 'solar' ? (
-            <Field label={t.date}>
+            <Field label={t.date} wide>
               <input type="date" value={date} min="1901-01-01" max="2099-12-31" onChange={(e) => setDate(e.target.value)} className={inputCls} />
             </Field>
           ) : (
-            <Field label={t.lunarDate}>
-              <span className="grid grid-cols-[1.3fr_1.2fr_1fr] gap-1.5">
-                <select id="lunar-y" aria-label={t.lunarYear} value={ly} onChange={(e) => { setLy(Number(e.target.value)); setLm(String(lmNum)) }} className={`${inputCls} px-2`}>
-                  {LUNAR_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+            <Field label={t.lunarDate} wide group>
+              <span className="grid grid-cols-[1.35fr_1fr_1fr] gap-1.5 sm:gap-2">
+                <select id="lunar-y" aria-label={t.lunarYear} value={ly} onChange={(e) => { setLy(Number(e.target.value)); setLm(String(lmNum)) }} className={`${inputCls} min-w-0 px-2`}>
+                  {LUNAR_YEARS.map((y) => <option key={y} value={y}>{isZh ? `${y}年` : y}</option>)}
                 </select>
-                <select id="lunar-m" aria-label={t.lunarMonth} value={lm} onChange={(e) => setLm(e.target.value)} className={`${inputCls} px-2`}>
+                <select id="lunar-m" aria-label={t.lunarMonth} value={lm} onChange={(e) => setLm(e.target.value)} className={`${inputCls} min-w-0 px-2`}>
                   {monthOptions.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
                 </select>
-                <select id="lunar-d" aria-label={t.lunarDay} value={Math.min(ld, lDays)} onChange={(e) => setLd(Number(e.target.value))} className={`${inputCls} px-2`}>
+                <select id="lunar-d" aria-label={t.lunarDay} value={Math.min(ld, lDays)} onChange={(e) => setLd(Number(e.target.value))} className={`${inputCls} min-w-0 px-2`}>
                   {Array.from({ length: lDays }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{isZh ? LUNAR_DAY_ZH[d - 1] : d}</option>)}
                 </select>
               </span>
@@ -357,17 +357,17 @@ function BaziForm({ t, lang, onSubmit, initial }) {
               <option value="female">{t.female}</option>
             </select>
           </Field>
-          <Field label={t.birthPlace}>
-            <span className="grid grid-cols-2 gap-1.5">
+          <Field label={t.birthPlace} wide group>
+            <span className="grid grid-cols-2 gap-1.5 sm:gap-2">
               <select id="birth-region" aria-label={t.birthRegion} value={region} disabled={hourUnknown}
                 onChange={(e) => { const k = e.target.value; setRegion(k); const g = groups.find((x) => x.key === k); setPlace(g ? g.items[0].id : ''); setDstChoice(null) }}
-                className={`${inputCls} px-2 disabled:opacity-40`}>
+                className={`${inputCls} min-w-0 px-2 disabled:opacity-40`}>
                 <option value="">{t.birthPlaceNone}</option>
                 {groups.map((g) => <option key={g.key} value={g.key}>{g.label}</option>)}
               </select>
               <select id="birth-city" aria-label={t.birthCity} value={place} disabled={hourUnknown || !regionGroup}
                 onChange={(e) => { setPlace(e.target.value); setDstChoice(null) }}
-                className={`${inputCls} px-2 disabled:opacity-40`}>
+                className={`${inputCls} min-w-0 px-2 disabled:opacity-40`}>
                 {!regionGroup && <option value="">—</option>}
                 {regionGroup && regionGroup.items.map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}
               </select>
