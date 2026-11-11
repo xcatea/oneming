@@ -1,11 +1,20 @@
 // 一命 · /api/reading —— DeepSeek 解读代理（Cloudflare Pages Function）
 // 安全要点：
 //  1. API Key 只来自 CF 环境密钥 env.DEEPSEEK_API_KEY，不进前端/不进 GitHub。
-//  2. Prompt 在服务端构建，外部只能传"盘面事实"，无法把本接口当通用 LLM 滥用。
-//  3. 无状态：只收到已脱敏的干支/旺衰事实，不接触出生日期，不存储、不日志化。
-//  4. 反啰嗦：硬字数上限 + max_tokens 截断 + 禁过渡水词；并做服务端合规过滤。
+//  2. 客户端只传"干支"（最多 8 个字）+ 语言，服务端自己重算旺衰/喜用并构建 Prompt，
+//     外部无法注入任何自由文本，本接口不能被当成通用 LLM 盗用。
+//  3. 无状态：不接触出生日期，不存储、不日志化。
+//  4. 同一张盘的结果走 Cloudflare Cache API 缓存（盘面组合有限，命中率高，几乎不重复花钱）。
+//  5. 可选限流：绑定 KV（变量名 RATE_KV）后按 IP 每分钟限次；不绑定则跳过。
+//  6. 反啰嗦 + 合规：硬字数上限 + max_tokens 截断 + 服务端合规过滤。
+
+import { analyzeChart } from '../../src/analyze.js'
+import { chartFromPillars, isValidPillars, ELEMENT_META } from '../../src/wuxing.js'
+import { SITE } from '../../src/site.config.js'
 
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions'
+const PROMPT_VERSION = 'v2' // 改 Prompt 时 +1，旧缓存自动失效
+const RATE_LIMIT_PER_MIN = 20
 
 // —— 反啰嗦 + 合规 的服务端系统提示 ——
 function systemPrompt(lang, mode) {
@@ -41,7 +50,7 @@ function userPrompt(f, lang) {
     return `[CHART FACTS]
 - Day Master: ${f.dayGan} (${f.dayElement})
 - Strength: ${f.strengthLabel} — ${f.strengthReason}
-- Favorable elements: ${(f.favorElements || []).join(' / ')} — ${f.favorLogic}
+- Favorable elements: ${f.favorElements.join(' / ')} — ${f.favorLogic}
 - Tone cue: ${f.core}
 - Direction cue: ${f.leverage}
 Write the reading now.`
@@ -49,36 +58,86 @@ Write the reading now.`
   return `【盘面事实】
 - 日主：${f.dayGan}（${f.dayElement}）
 - 旺衰：${f.strengthLabel}——${f.strengthReason}
-- 喜用五行：${(f.favorElements || []).join('、')}——${f.favorLogic}
+- 喜用五行：${f.favorElements.join('、')}——${f.favorLogic}
 - 性格线索：${f.core}
 - 方向线索：${f.leverage}
 请据此撰写解读。`
 }
 
+// 服务端用确定性引擎自己算事实（不信任客户端传来的任何文字）
+function buildFacts(pillars, lang) {
+  const chart = chartFromPillars(pillars)
+  const a = analyzeChart(chart, lang)
+  const el = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
+  return {
+    dayGan: chart.dayGan,
+    dayElement: el(a.dayElement),
+    strengthLabel: a.strength.label,
+    strengthReason: a.strength.reason,
+    favorElements: a.favor.elements.map(el),
+    favorLogic: a.favor.logic,
+    core: a.traits.core,
+    leverage: a.traits.leverage,
+  }
+}
+
 // 服务端合规兜底过滤
 const DENY = /(改运|转运|开运|开光|化解|招财|辟邪|消灾|护身符|风水|命中注定|注定|必然|一定会|大吉|大凶|凶险|劫难|灾祸|婚姻(会|将|方面)|财运(会|将|预测)|寿命|哪一年|change (your )?(fate|luck)|fortune-?tell|destined|lucky charm|talisman|feng ?shui|disaster|lifespan)/i
 
+function hostOf(v) {
+  try { return new URL(v).hostname.toLowerCase() } catch (e) { return '' }
+}
+
+// 浏览器的同源 POST 一定带 Origin；没有 Origin/Referer 的一律视为脚本调用，拒绝
 function allowOrigin(request) {
-  const o = (request.headers.get('origin') || request.headers.get('referer') || '').toLowerCase()
-  if (!o) return true // 同源直连可能无 origin，放行
-  return /oneming\.net|\.pages\.dev|localhost|127\.0\.0\.1/.test(o)
+  const host = hostOf(request.headers.get('origin') || '') || hostOf(request.headers.get('referer') || '')
+  if (!host) return false
+  if (SITE.allowedHosts.includes(host)) return true
+  if (SITE.allowPreviewHosts && host.endsWith('.pages.dev')) return true
+  return host === 'localhost' || host === '127.0.0.1'
+}
+
+async function rateLimited(request, env) {
+  if (!env.RATE_KV) return false
+  try {
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown'
+    const key = `rl:${ip}:${Math.floor(Date.now() / 60000)}`
+    const n = parseInt((await env.RATE_KV.get(key)) || '0', 10)
+    if (n >= RATE_LIMIT_PER_MIN) return true
+    await env.RATE_KV.put(key, String(n + 1), { expirationTtl: 120 })
+  } catch (e) { /* KV 异常时不拦截 */ }
+  return false
+}
+
+function cacheRequest(pillars, lang, mode) {
+  const id = pillars.map((p) => p.key[0] + p.gan + p.zhi).join('')
+  return new Request(`https://cache.${SITE.domain}/reading/${PROMPT_VERSION}/${lang}/${mode}/${encodeURIComponent(id)}`)
 }
 
 export async function onRequestPost(context) {
   const { request, env } = context
   try {
     if (!allowOrigin(request)) return json({ error: 'forbidden' }, 403)
+
+    const body = await request.json().catch(() => null)
+    if (!body || !isValidPillars(body.pillars)) return json({ error: 'bad_pillars' }, 400)
+    const pillars = body.pillars.map((p) => ({ key: p.key, gan: p.gan, zhi: p.zhi }))
+    const lang = body.lang === 'en' ? 'en' : 'zh'
+    const mode = body.mode === 'standard' ? 'standard' : 'concise'
+
+    // 1) 先查缓存
+    const cache = typeof caches !== 'undefined' ? caches.default : null
+    const ckey = cacheRequest(pillars, lang, mode)
+    if (cache) {
+      const hit = await cache.match(ckey)
+      if (hit) return json({ text: (await hit.json()).text, cached: true }, 200)
+    }
+
+    // 2) 再限流（命中缓存的请求不计次）
+    if (await rateLimited(request, env)) return json({ error: 'rate_limited' }, 429)
     if (!env.DEEPSEEK_API_KEY) return json({ error: 'no_key' }, 500)
 
-    const f = await request.json()
-    // 最小校验：必须带核心事实，否则拒绝（防滥用）
-    if (!f || !f.dayGan || !f.dayElement || !f.strengthLabel) {
-      return json({ error: 'bad_facts' }, 400)
-    }
-    const lang = f.lang === 'en' ? 'en' : 'zh'
-    const mode = f.mode === 'standard' ? 'standard' : 'concise'
-    const maxTokens = mode === 'standard' ? 480 : 240
-
+    const facts = buildFacts(pillars, lang)
     const resp = await fetch(DEEPSEEK_URL, {
       method: 'POST',
       headers: {
@@ -89,12 +148,13 @@ export async function onRequestPost(context) {
         model: 'deepseek-chat',
         messages: [
           { role: 'system', content: systemPrompt(lang, mode) },
-          { role: 'user', content: userPrompt(f, lang) },
+          { role: 'user', content: userPrompt(facts, lang) },
         ],
-        max_tokens: maxTokens,
+        max_tokens: mode === 'standard' ? 480 : 240,
         temperature: 0.6,
         stream: false,
       }),
+      signal: AbortSignal.timeout(12000),
     })
 
     if (!resp.ok) return json({ error: 'upstream', status: resp.status }, 502)
@@ -102,6 +162,13 @@ export async function onRequestPost(context) {
     const text = data?.choices?.[0]?.message?.content?.trim() || ''
     if (!text || DENY.test(text)) return json({ error: 'rejected' }, 422)
 
+    // 3) 写缓存（30 天）
+    if (cache) {
+      const toCache = new Response(JSON.stringify({ text }), {
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=2592000' },
+      })
+      context.waitUntil(cache.put(ckey, toCache))
+    }
     return json({ text }, 200)
   } catch (e) {
     return json({ error: 'server' }, 500)

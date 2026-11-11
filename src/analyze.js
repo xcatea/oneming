@@ -83,7 +83,10 @@ export function analyzeChart(chart, lang = 'zh') {
   for (const el of others) if (isSupporter(relationOf(D, el))) support++
 
   // —— 3) 评分与三档（得令 +3；每个同党 +1，范围 0–9）
-  const score = (inSeason ? 3 : 0) + support
+  // 时辰未知时只有 4 个参与字，按 6 字等比折算，保证三档阈值一致
+  const hourKnown = others.length === 6
+  const supportScaled = hourKnown ? support : Math.round((support * 6) / others.length)
+  const score = (inSeason ? 3 : 0) + supportScaled
   let tier = 'balanced'
   if (score >= 5) tier = 'strong'
   else if (score <= 2) tier = 'weak'
@@ -106,8 +109,8 @@ export function analyzeChart(chart, lang = 'zh') {
     const min = Math.min(...Object.values(counts))
     favorEls = Object.keys(counts).filter((e) => counts[e] === min)
     avoidEls = []
-    favorShishenZh = '趋于平衡，缺什么补什么'
-    favorShishenEn = 'balanced — lean toward whatever is least present'
+    favorShishenZh = '补足盘中最少的五行（中和取平衡）'
+    favorShishenEn = 'whatever element is least present (keeping the balance)'
   }
   favorEls = [...new Set(favorEls)]
 
@@ -118,26 +121,31 @@ export function analyzeChart(chart, lang = 'zh') {
   const reasonZh =
     `日主为${EL_ZH[D]}，生于${EL_ZH[monthZhiEl]}月——` +
     (inSeason ? '当月之气生扶日主，属得令；' : '当月之气未生扶日主，属失令；') +
-    `八字中生扶日主（印、比劫）的字共 ${support} 个。综合判为「${tierZh}」。`
+    `${hourKnown ? '八字' : '已知三柱'}中生扶日主（印、比劫）的字共 ${support} 个。综合判为「${tierZh}」` +
+    (hourKnown ? '。' : '（时辰未知，按三柱估算，仅供参考）。')
   const reasonEn =
     `The Day Master is ${EL_EN[D]}, born in a ${EL_EN[monthZhiEl]} month — ` +
     (inSeason ? 'the season supports it (in-season); ' : 'the season does not support it (out-of-season); ') +
-    `${support} of the other characters reinforce it. Overall: ${tierEn}.`
+    `${support} of the other characters reinforce it. Overall: ${tierEn}` +
+    (hourKnown ? '.' : ' (hour unknown — estimated from three pillars).')
 
   const elNames = (arr) => arr.map((e) => (lang === 'en' ? EL_EN[e] : EL_ZH[e])).join(lang === 'en' ? ' / ' : '、')
 
   const favorLogic = lang === 'en'
-    ? `As a ${tierEn.toLowerCase()} Day Master, the chart leans toward ${favorShishenEn}, i.e. the elements ${elNames(favorEls)}.`
+    ? `As a ${tierEn.toLowerCase()} Day Master, the chart leans toward ${favorShishenEn}, i.e. ${favorEls.length > 1 ? 'the elements' : 'the element'} ${elNames(favorEls)}.`
     : `日主${tierZh}，喜用倾向于${favorShishenZh}，对应五行：${elNames(favorEls)}。`
 
   // 性格主述：基调 + 旺衰修饰
-  const core = `${L(ELEMENT_TRAIT[D])}。${L(STRENGTH_MOD[tier])}`
+  const traitText = L(ELEMENT_TRAIT[D])
+  const core = lang === 'en'
+    ? `You come across as ${traitText}. ${L(STRENGTH_MOD[tier])}`
+    : `${traitText}。${L(STRENGTH_MOD[tier])}`
   // 可发挥方向：由喜用五行映射
   const leverage = favorEls.map((e) => L(FAVOR_DIRECTION[e])).join(lang === 'en' ? '; ' : '；')
 
   return {
     dayElement: D,
-    strength: { tier, label: lang === 'en' ? tierEn : tierZh, score, inSeason, supportCount: support, reason: lang === 'en' ? reasonEn : reasonZh },
+    strength: { tier, label: lang === 'en' ? tierEn : tierZh, score, inSeason, hourKnown, supportCount: support, reason: lang === 'en' ? reasonEn : reasonZh },
     favor: { elements: favorEls, avoidElements: avoidEls, logic: favorLogic },
     traits: {
       core,

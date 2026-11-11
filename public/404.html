@@ -6,10 +6,10 @@
 <title>页面不存在 - 一命 ONEMING</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <style>
 :root{--paper:#ece5d6;--ink:#211d18;--soft:#5a5246;--jade:#4c6b5e;--seal:#9e342a}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Serif SC",Georgia,serif;line-height:1.8;display:flex;min-height:100vh;align-items:center;justify-content:center}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Serif SC","Songti SC","STSong","SimSun",Georgia,serif;line-height:1.8;display:flex;min-height:100vh;align-items:center;justify-content:center}
 .wrap{text-align:center;padding:24px}
 .seal{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:12px;background:var(--seal);color:#f3ece1;font-weight:700;font-size:34px}
 h1{font-size:26px;margin:20px 0 6px}
@@ -25,6 +25,7 @@ a{color:var(--jade)}
   <p>你要找的页面不存在或已被移动。</p>
   <p>去 <a href="/term/">命理小词典</a> 看看，或回首页排一张你的命盘。</p>
   <a class="btn" href="/">返回首页</a>
+  <p style="margin-top:18px"><a href="/en/">English</a> · <a href="/shengxiao/">十二生肖</a></p>
 </div>
 </body>
 </html>
