@@ -480,6 +480,35 @@ ${faqHtml(faqs, 'en')}
 }
 
 // ================= 五行配色（变现落地页） =================
+// Five Elements interaction: classical generating (sheng) and controlling (ke) cycles.
+const WUXING_SHENG = { wood: 'fire', fire: 'earth', earth: 'metal', metal: 'water', water: 'wood' }
+const WUXING_KE = { wood: 'earth', earth: 'water', water: 'fire', fire: 'metal', metal: 'wood' }
+function elementExplorer(lang) {
+  const isEn = lang === 'en'
+  const labels = Object.fromEntries(Object.entries(ELEMENT_META).map(([k, v]) => [k, isEn ? v.en : v.zh]))
+  const names = ['wood', 'fire', 'earth', 'metal', 'water']
+  const data = names.map((id) => ({ id, name: labels[id], color: ELEMENT_META[id].color, produces: WUXING_SHENG[id], controls: WUXING_KE[id] }))
+  const buttons = data.map((d) => `<button type="button" class="el-btn" data-el="${d.id}" aria-pressed="false" style="padding:10px 14px;margin:3px;border:1px solid #aaa;border-radius:10px;background:transparent;color:inherit;cursor:pointer;font:inherit">${esc(d.name)}</button>`).join('')
+  const copy = isEn
+    ? { title: 'Explore the Five Elements', lead: 'Choose an element to see its relationships in the traditional cycles.', produces: 'Generates (Sheng)', controls: 'Controls (Ke)', note: 'These cycles describe classical symbolic relationships. They do not predict personality or luck.' }
+    : { title: '互动了解五行生克', lead: '点击一个五行，查看传统的相生与相克关系。', produces: '相生', controls: '相克', note: '五行生克是传统文化中的象征关系，不是对个人性格或运势的预测。' }
+  return `<section class="box" id="element-explorer" aria-label="${esc(copy.title)}">
+<h2 class="sec">${esc(copy.title)}</h2><p>${esc(copy.lead)}</p>
+<div role="group" aria-label="${esc(copy.title)}">${buttons}</div>
+<div id="element-result" aria-live="polite" style="margin-top:12px"></div>
+<p class="src">${esc(copy.note)}</p></section>
+<script>
+(function(){
+var items=${JSON.stringify(data)},byId=Object.fromEntries(items.map(function(x){return [x.id,x]}));
+var buttons=document.querySelectorAll('#element-explorer .el-btn'),out=document.getElementById('element-result');
+function select(id){var d=byId[id];if(!d)return;buttons.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.el===id));b.style.borderColor=b.dataset.el===id?d.color:'#aaa';b.style.fontWeight=b.dataset.el===id?'700':'400'});
+out.textContent='';var title=document.createElement('strong');title.textContent=d.name;title.style.color=d.color;out.appendChild(title);
+var p=document.createElement('p');p.textContent='${copy.produces}: '+d.name+' → '+byId[d.produces].name+' · ${copy.controls}: '+d.name+' → '+byId[d.controls].name;out.appendChild(p);}
+buttons.forEach(function(b){b.addEventListener('click',function(){select(b.dataset.el)})});select('wood');
+})();
+</script>`
+}
+
 function colorsPage(lang) {
   const isEn = lang === 'en'
   const url = isEn ? `${BASE}/en/five-element-colors/` : `${BASE}/wuxing-colors/`
@@ -514,6 +543,9 @@ function colorsPage(lang) {
     ? 'Classical Chinese thought links each of the Five Elements to a color, a direction and a season. Below are those correspondences with materials that share each element’s character.'
     : '传统上，五行各有对应的颜色（五色）、方位（五方）与季节（五季）。下面把这些对应关系整理成表，并附上气质相近的常见材质。'}</p>
 <div class="table-wrap"><table><thead><tr><th>${isEn ? 'Element' : '五行'}</th><th>${isEn ? 'Colors' : '颜色'}</th><th>${isEn ? 'Direction · Season' : '方位 · 季节'}</th><th>${isEn ? 'Materials' : '常见材质'}</th></tr></thead><tbody>${rows}</tbody></table></div>
+${elementExplorer(lang)}
+<h2 class="sec">${isEn ? 'What do generating and controlling mean?' : '什么是五行相生与相克？'}</h2>
+<p>${isEn ? 'In the traditional generating cycle, Wood feeds Fire, Fire yields Earth, Earth gives rise to Metal, Metal is associated with Water, and Water nourishes Wood. In the controlling cycle, Wood restrains Earth, Earth restrains Water, Water restrains Fire, Fire restrains Metal, and Metal restrains Wood. These are symbolic models from classical Chinese thought, not physical or medical laws.' : '传统五行相生为木生火、火生土、土生金、金生水、水生木；相克为木克土、土克水、水克火、火克金、金克木。它们是传统思想中的象征模型，并非物理或医学规律。'}</p>
 <h2 class="sec">${isEn ? 'How to find your elements' : '怎么知道自己对应哪几个五行'}</h2>
 <p>${isEn
     ? 'Your Day Master and the balance of your chart point to your <a href="/en/term/xiyong/">favorable elements</a>. Our free calculator works them out from your birth date and time and shows them on your result.'

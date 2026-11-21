@@ -93,3 +93,24 @@ test('twelve English animal pages explain culture, calendrical branches and trad
     }
   }
 })
+
+test('Five Elements explorer appears in both language pages with correct symbolic cycles', () => {
+  const pages = new Map()
+  buildGrowth({ write: (path, html) => pages.set(path, html), ALL: [] })
+  for (const path of ['en/five-element-colors/index.html', 'wuxing-colors/index.html']) {
+    const html = pages.get(path)
+    assert.ok(html, path)
+    assert.ok(html.includes('id="element-explorer"'))
+    assert.ok(html.includes('aria-pressed="false"'))
+    assert.ok(html.includes('id="element-result" aria-live="polite"'))
+    const scripts = html.split('<script>').slice(1).map((part) => part.split('</script>')[0])
+    assert.ok(scripts.length > 0)
+    for (const script of scripts) assert.doesNotThrow(() => new Function(script))
+    assert.ok(html.includes('"id":"wood"'))
+    assert.ok(html.includes('"produces":"fire"'))
+    assert.ok(html.includes('"controls":"earth"'))
+    assert.ok(html.includes('"id":"water"'))
+    assert.ok(html.includes('"produces":"wood"'))
+    assert.ok(html.includes('"controls":"fire"'))
+  }
+})
