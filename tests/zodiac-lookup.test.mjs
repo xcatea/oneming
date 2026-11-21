@@ -33,6 +33,7 @@ test('zodiac date checker covers 1900–2100 while detailed year pages stay boun
     assert.match(page, /San Ming Tong Hui/)
   }
 })
+
 test('date checker shows the exact zodiac-year interval and flags the Li Chun-to-New Year gap', () => {
   const pages = new Map()
   buildGrowth({ write: (path, html) => pages.set(path, html), ALL: [] })
@@ -43,12 +44,13 @@ test('date checker shows the exact zodiac-year interval and flags the Li Chun-to
   assert.match(hub, /Your Chinese zodiac animal is/)
   assert.match(hub, /Zodiac year/)
   assert.match(hub, /This date falls between Li Chun/)
-  const scripts = [...hub.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)]
+  const scripts = hub.split('<script>').slice(1).map((part) => part.split('</script>')[0])
   assert.ok(scripts.length > 0, 'generated lookup script exists')
-  for (const match of scripts) assert.doesNotThrow(() => new Function(match[1]), 'generated inline JavaScript parses')
-  const dataMatch = hub.match(/var ZD=(\\[[\\s\\S]*?\\]),ZH=null;/)
-  assert.ok(dataMatch, 'lookup date data is embedded')
-  const rows = JSON.parse(dataMatch[1])
+  for (const script of scripts) assert.doesNotThrow(() => new Function(script), 'generated inline JavaScript parses')
+  const dataStart = hub.indexOf('var ZD=') + 'var ZD='.length
+  const dataEnd = hub.indexOf(',ZH=null;', dataStart)
+  assert.ok(dataStart >= 'var ZD='.length && dataEnd > dataStart, 'lookup date data is embedded')
+  const rows = JSON.parse(hub.slice(dataStart, dataEnd))
   const rabbit1975 = rows.find((row) => row[1] === 1975)
   assert.deepEqual(rabbit1975.slice(0, 3), ['1975-02-11', 1975, 'rabbit'])
   assert.deepEqual(rabbit1975.slice(10, 14), ['1976-01-30', '1975-02-04', '18:59', 'before'])
