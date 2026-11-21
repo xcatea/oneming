@@ -94,10 +94,10 @@ function lookupWidget(lang) {
 <a id="zl-dl" download="zodiac-card.png" style="display:inline-block;margin-top:10px;${btnCss};text-decoration:none">${t.save}</a></div></div>
 <p class="src" style="margin:4px 0 0">${t.range}</p></div>
 <script>var ZD=${JSON.stringify(data)},ZH=null;
-function zf(v){return new Date(v+'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}
+function zf(v){return new Date(v+'T12:00:00').toLocaleDateString('${lang === 'en' ? 'en-US' : 'zh-CN'}',{year:'numeric',month:'short',day:'numeric'})}
 function zl(e){e.preventDefault();var v=document.getElementById('zl-d').value,h=null;for(var i=0;i<ZD.length;i++){if(ZD[i][0]<=v)h=ZD[i];else break}var r=document.getElementById('zl-r');ZH=h;document.getElementById('zl-out').style.display='none';if(!h){r.textContent='';document.getElementById('zl-card').style.display='none';return false}
 var range=zf(h[0])+' – '+zf(h[10]),note=(h[13]==='before'?(v>=h[11]&&v<h[0]):(v>=h[0]&&v<h[11]));
-r.innerHTML='${t.res}' <strong>'+h[4]+'</strong> · '+h[3]+'<br><span class="src">${t.dateRange}': '+range+'</span><br><a href="${base}'+h[2]+'/">'+h[4]+' →</a>'+(h[1]>=${YEAR_FROM}&&h[1]<=${YEAR_TO}?' · <a href="${base}'+h[1]+'/">${t.yr} '+h[1]+' →</a>':'')+(note?'<p class="note"><strong>${t.baziNote}':</strong> ${t.baziExplain} (Li Chun: '+zf(h[11])+' '+h[12]+' Beijing time.)</p>':'');
+r.innerHTML='${t.res} <strong>'+h[4]+'</strong> · '+h[3]+'<br><span class="src">${t.dateRange}: '+range+'</span><br><a href="${base}'+h[2]+'/">'+h[4]+' →</a>'+(h[1]>=${YEAR_FROM}&&h[1]<=${YEAR_TO}?' · <a href="${base}'+h[1]+'/">${t.yr} '+h[1]+' →</a>':'')+(note?'<p class="note"><strong>${t.baziNote}:</strong> ${t.baziExplain} (Li Chun: '+zf(h[11])+' '+h[12]+' Beijing time.)</p>':'');
 document.getElementById('zl-card').style.display='block';if(window.gtag)gtag('event','zodiac_lookup',{lang:'${lang}'});return false}
 function zc(){if(!ZH)return;var c=document.getElementById('zl-cv'),x=c.getContext('2d'),W=1080,H=1440,S='"Noto Serif SC","Songti SC","STSong","SimSun",Georgia,serif';
 x.fillStyle='#ece5d6';x.fillRect(0,0,W,H);x.fillStyle='rgba(0,0,0,.02)';x.beginPath();x.arc(W*.85,H*.12,300,0,7);x.fill();x.beginPath();x.arc(W*.1,H*.88,280,0,7);x.fill();
