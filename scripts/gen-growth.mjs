@@ -320,19 +320,31 @@ function yearPageEn(Y) {
     { q: `What if I was born in January ${Y}?`, a: `Chinese New Year ${Y} fell on ${dEn(y.cny)}. Anyone born before that date belongs to the previous year — the ${nameEn(yearInfo(Y - 1))} (${yearInfo(Y - 1).gz}).` },
     { q: `What is the Na Yin element of ${Y}?`, a: `${y.gz} years carry the Na Yin "${y.nayin}" — ${NAYIN_EN[y.nayin] || ''}. Na Yin is a poetic secondary element assigned to each pair of stem-branch years; it’s different from the stem element used in "${nameEn(y)}".` },
     ...(Y === 1975 ? [{ q: 'Why is 1975 called the Wood Rabbit year?', a: '1975 is Yi-Mao (乙卯). Yi (乙), the Heavenly Stem, is associated with Yin Wood; Mao (卯), the Earthly Branch, is the Rabbit. The Na Yin label for Yi-Mao is Da Xi Shui (大溪水), often translated as Big Stream Water. These are different traditional classification layers, not conflicting answers.' }] : []),
+    ...(Y === 1986 || Y === 1995 || Y === 1998 ? [{ q: `Why is ${Y} called the ${nameEn(y)} year?`, a: `${Y} is ${y.gz} (${STEM_EN[y.gan]}-${BRANCH_EN[y.zhi]}): the Heavenly Stem ${y.gan} is ${y.yang ? 'Yang' : 'Yin'} ${EL_EN(y.el)}, and the Earthly Branch ${y.zhi} is the ${a.en}. Its Na Yin is ${y.nayin} (${NAYIN_EN[y.nayin]}), a separate traditional classification layer.` }] : []),
   ]
   const prevY = Y > YEAR_FROM ? `<a href="${hrefEn.year(Y - 1)}">← ${Y - 1} ${yearInfo(Y - 1).animal.en}</a>` : ''
   const nextY = Y < YEAR_TO ? `<a href="${hrefEn.year(Y + 1)}">${Y + 1} ${yearInfo(Y + 1).animal.en} →</a>` : ''
-  const sourcesEn = Y === 1975 ? `
+  const sourcedYears = [1975, 1986, 1995, 1998]
+  const sourcesEn = sourcedYears.includes(Y) ? `
 <div class="sources">
 <h2>Calendar and classical references</h2>
 <ul>
-<li><a href="https://www.hko.gov.hk/en/gts/time/calendar/pdf/files/1975e.pdf" rel="noopener noreferrer">Hong Kong Observatory: 1975 Gregorian–Lunar Calendar Conversion Table</a> — reference for the 1975 lunar calendar and Chinese New Year date.</li>
+<li><a href="https://www.hko.gov.hk/en/gts/time/calendar/pdf/files/${Y}e.pdf" rel="noopener noreferrer">Hong Kong Observatory: ${Y} Gregorian–Lunar Calendar Conversion Table</a> — reference for the lunar calendar and Chinese New Year date.</li>
 <li><a href="https://www.hko.gov.hk/en/gts/time/conversion.htm" rel="noopener noreferrer">Hong Kong Observatory: Gregorian–Lunar Calendar Conversion Table</a> — explains the calendar conversion framework and its date coverage.</li>
-<li><a href="https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83/%E5%8D%B7%E4%B8%80" rel="noopener noreferrer">San Ming Tong Hui (三命通會), Volume 1</a> — classical text listing “甲寅乙卯大溪水” in its Na Yin discussion.</li>
+<li><a href="https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83/%E5%8D%B7%E4%B8%80" rel="noopener noreferrer">San Ming Tong Hui (三命通會), Volume 1</a> — classical reference for the Na Yin name associated with this stem-branch pair.</li>
 </ul>
-<p class="src">The Li Chun time shown on this page is calculated by the site's calendar engine and expressed in Beijing time (UTC+8). Calendar conventions can differ: the popular zodiac animal changes at Chinese New Year, while BaZi year-pillar calculations commonly use Li Chun.</p>
+<p class="src">The Li Chun time shown on this page is calculated by the site's calendar engine and expressed in Beijing time (UTC+8). The popular zodiac animal changes at Chinese New Year; BaZi year-pillar calculations commonly use Li Chun.</p>
 </div>
+` : ''
+  const yearSpecificExtraEn = [1986, 1995, 1998].includes(Y) ? `
+<h2 class="sec">Why ${Y} is called the ${nameEn(y)} year</h2>
+<p>${Y} is ${y.gz} (${STEM_EN[y.gan]}-${BRANCH_EN[y.zhi]}). The Heavenly Stem ${y.gan} is traditionally associated with ${y.yang ? 'Yang' : 'Yin'} ${EL_EN(y.el)}, while the Earthly Branch ${y.zhi} is the ${a.en}. The familiar year label — ${nameEn(y)} — combines those two parts.</p>
+<p>The Na Yin designation is ${y.nayin} (${NAYIN_EN[y.nayin]}). This is a separate classification assigned to the complete stem-branch pair, not a replacement for the Heavenly Stem's Five Element association.</p>
+<h2 class="sec">${nameEn(y)} in traditional symbolism</h2>
+<p>${Y === 1986 ? 'Tiger symbolism is often associated in popular zodiac writing with courage, initiative and a strong presence. Fire is used as a symbol of warmth, visibility and movement.' : Y === 1995 ? 'Pig symbolism is often associated in popular zodiac writing with generosity, sincerity and enjoyment of ordinary comforts. Wood is used as a symbol of growth, flexibility and cultivation.' : 'Tiger symbolism is often associated in popular zodiac writing with courage, initiative and a strong presence. Earth is used as a symbol of steadiness, support and practical care.'}</p>
+<p>These are traditional cultural associations, not scientifically validated personality traits or reliable predictions. A birth-year animal and stem alone cannot determine an individual's character, career, finances, health or relationships. A full BaZi reading uses the year, month, day and hour pillars, and interpretations vary by school.</p>
+<h2 class="sec">Check the exact birthday</h2>
+<p>The ${Y} zodiac-year interval runs from <strong>${dEn(y.cny)}</strong> to <strong>${dEn(y.end)}</strong> under the Chinese New Year convention. If you were born in January or early February, check your complete birth date rather than using the Gregorian year alone. BaZi also observes the Li Chun boundary, which may produce a different year pillar for births between the two dates.</p>
 ` : ''
   const yearSpecificEn = Y === 1975 ? `
 <h2 class="sec">Why 1975 is called the Wood Rabbit year</h2>
@@ -361,6 +373,7 @@ function yearPageEn(Y) {
 <p>${a.traitEn}</p>
 <p>${ELEMENT_FLAVOR[y.el].en}</p>
 ${yearSpecificEn}
+${yearSpecificExtraEn}
 ${sourcesEn}
 <p><a href="${hrefEn.animal(a)}">All about the ${a.en}: compatibility and every ${a.en} year →</a></p>
 <h2 class="sec">The 60-year cycle</h2>
