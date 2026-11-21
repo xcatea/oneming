@@ -114,3 +114,20 @@ test('Five Elements explorer appears in both language pages with correct symboli
     assert.ok(html.includes('"controls":"fire"'))
   }
 })
+
+test('English BaZi beginner guide is generated and linked from both entry hubs', () => {
+  const pages = new Map()
+  const { urls } = buildGrowth({ write: (path, html) => pages.set(path, html), ALL: [] })
+  const path = 'en/bazi-for-beginners/index.html'
+  const html = pages.get(path)
+  assert.ok(html, 'BaZi beginner guide is generated')
+  assert.ok(urls.includes('https://oneming.net/en/bazi-for-beginners/'), 'guide is included in the sitemap URL list')
+  for (const phrase of ['BaZi for Beginners', 'The four pillars at a glance', 'BaZi versus the Chinese zodiac', 'What is the Day Master?', 'What are the Ten Gods?', 'Li Chun', '1975', 'not a scientifically validated']) {
+    assert.ok(html.includes(phrase), phrase)
+  }
+  for (const hub of ['en/chinese-zodiac/index.html', 'en/term/index.html']) {
+    assert.ok(pages.get(hub).includes('/en/bazi-for-beginners/'), hub)
+  }
+  assert.ok(html.includes('<link rel="canonical" href="https://oneming.net/en/bazi-for-beginners/"'))
+  assert.ok(html.includes('application/ld+json'))
+})
