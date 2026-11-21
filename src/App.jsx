@@ -929,6 +929,56 @@ function NextSteps({ analysis, t, lang }) {
   )
 }
 
+// English-only educational explanation: reads the existing calculated chart, never recalculates pillars.
+const PILLAR_EXPLANATIONS_EN = {
+  year: 'The year stem and branch form the year pillar. BaZi commonly uses Li Chun (Start of Spring) as its year boundary, which may differ from the popular Chinese New Year zodiac.',
+  month: 'The month pillar is determined using solar terms, rather than the first day of a Gregorian month.',
+  day: 'The day stem is your Day Master, the reference point for traditional Five Elements and Ten Gods relationships.',
+  time: 'The hour pillar depends on the birth time and the time convention used. A two-hour branch period does not always align with a standard clock-hour boundary.',
+}
+function ChartExplainedEn({ data }) {
+  return (
+    <section className="mt-9 rounded-xl border border-[rgba(76,107,94,0.24)] bg-[rgba(76,107,94,0.05)] p-5" aria-labelledby="chart-explained-title">
+      <h3 id="chart-explained-title" className="font-zh text-xl font-semibold">Your BaZi chart, explained</h3>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-soft)]">
+        These four pillars are calculated from the birth details you entered. The notes below explain the traditional terminology, not your future or personality.
+      </p>
+      <dl className="mt-4 space-y-4">
+        {data.pillars.map((p) => (
+          <div key={p.key}>
+            <dt className="text-sm font-semibold">
+              {p.labelEn} · {p.gan}{p.zhi}
+            </dt>
+            <dd className="mt-1 text-sm leading-relaxed text-[var(--color-ink-soft)]">
+              {PILLAR_EXPLANATIONS_EN[p.key]}
+              {p.key !== 'day' && p.shishen && (
+                <> The stem's Ten Gods relationship is labeled <strong>{SHISHEN_EN[p.shishen] || p.shishen}</strong> in this chart.</>
+              )}
+            </dd>
+          </div>
+        ))}
+        {!data.hourKnown && (
+          <div>
+            <dt className="text-sm font-semibold">Hour pillar · Unknown</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-[var(--color-ink-soft)]">
+              You did not provide a birth hour, so this chart shows three known pillars. The hour pillar and any relationships derived from it remain undetermined.
+            </dd>
+          </div>
+        )}
+      </dl>
+      <p className="mt-4 text-sm leading-relaxed text-[var(--color-ink-soft)]">
+        <strong>Day Master:</strong> {data.dayGan} · {ELEMENT_META[data.dayElement].en}.
+        The Day Master is the day stem, not the zodiac animal. The Five Elements counts below summarize the stems and branches shown in your chart; they are not a measure of scientific personality traits.
+      </p>
+      <p className="mt-3 text-sm">
+        <a className="text-[var(--color-jade)] underline decoration-dotted underline-offset-4" href="/en/bazi-for-beginners/">Learn the Four Pillars step by step</a>
+        {' · '}
+        <a className="text-[var(--color-jade)] underline decoration-dotted underline-offset-4" href="/en/term/shishen/">What are the Ten Gods?</a>
+      </p>
+    </section>
+  )
+}
+
 function Result({ data, input, t, lang, onTerm }) {
   return (
     <section id="result" className="mx-auto max-w-3xl px-6 pb-16 md:px-12">
@@ -962,6 +1012,8 @@ function Result({ data, input, t, lang, onTerm }) {
           {data.pillars.map((p) => <Pillar key={p.key} p={p} lang={lang} />)}
           {!data.hourKnown && <PillarUnknown t={t} />}
         </div>
+
+        {lang === 'en' && <ChartExplainedEn data={data} />}
 
         {/* 五行分布（性格解读已由下方 AI 解读覆盖，去掉重复的"性格基调"） */}
         <div className="mt-9">
