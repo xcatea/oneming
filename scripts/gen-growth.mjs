@@ -226,7 +226,7 @@ function animalPageEn(a) {
     { q: `What element is the ${a.en}?`, a: `The ${a.en}’s fixed element is ${a.yang ? 'Yang' : 'Yin'} ${EL_EN(a.el)} (from its branch ${a.zhi}). Each ${a.en} year also has a stem element, which is why there are Wood, Fire, Earth, Metal and Water ${a.en}s.` },
   ]
   const rows = ys.map((y) => `<tr><td><a href="${hrefEn.year(y.Y)}">${y.Y}</a></td><td>${nameEn(y)}</td><td>${y.gz} (${STEM_EN[y.gan]}-${BRANCH_EN[y.zhi]})</td><td>${dEn(y.cny)} – ${dEn(y.end)}</td></tr>`).join('')
-  const flavors = ['wood', 'fire', 'earth', 'metal', 'water'].map((e) => `<li><strong>${EL_EN(e)} ${a.en}</strong>: ${ELEMENT_FLAVOR[e].en}</li>`).join('')
+  const flavors = ['wood', 'fire', 'earth', 'metal', 'water'].map((e) => { const examples = ys.filter((y) => y.el === e).slice(-2); return `<li><strong>${EL_EN(e)} ${a.en}</strong>: ${examples.map((y) => `<a href="${hrefEn.year(y.Y)}">${y.Y} (${y.gz})</a>`).join(', ')}</li>` }).join('')
   return head(title, desc, url, { lang: 'en', ads: true, alt: { zh: `${BASE}${hrefZh.animal(a)}`, en: url } }) +
     articleLd({ title, description: desc, url, lang: 'en' }) + faqLd(faqs) +
     breadcrumbLd([{ name: 'Home', item: `${BASE}/en/` }, { name: 'Chinese Zodiac', item: `${BASE}/en/chinese-zodiac/` }, { name: a.en, item: url }]) + `
@@ -238,7 +238,7 @@ function animalPageEn(a) {
 <p>${a.traitEn}</p>
 <p>${a.cultureEn}</p>
 <h2 class="sec">The five kinds of ${a.en}</h2>
-<p>Every ${a.en} year carries a different Heavenly Stem, so tradition distinguishes five types:</p>
+<p>The animal is determined by the Earthly Branch. The year’s element comes from its Heavenly Stem, so the same animal appears with all five elements over the 60-year cycle. Examples from the year table:</p>
 <ul>${flavors}</ul>
 <h2 class="sec">Year of the ${a.en}: all dates</h2>
 <div class="table-wrap"><table><thead><tr><th>Year</th><th>Element animal</th><th>Stem-Branch</th><th>Dates (Chinese New Year to New Year’s Eve)</th></tr></thead><tbody>${rows}</tbody></table></div>
