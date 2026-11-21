@@ -223,6 +223,8 @@ function animalPageEn(a) {
   const faqs = [
     { q: `What years are the Year of the ${a.en}?`, a: `Recent ${a.en} years: ${ys.map((y) => y.Y).join(', ')}. Each starts at Chinese New Year, so if you were born in January or early February, check the exact dates in the table.` },
     { q: `Which signs are most compatible with the ${a.en}?`, a: `Traditionally the ${a.en} forms a "Three Harmony" group with the ${r.sanhe.map((x) => x.en).join(' and ')} (${r.sanhe.map((x) => x.zhi).join('')}${a.zhi}, a ${EL_EN(r.sanheEl)} alliance) and a "Six Harmony" pair with the ${r.liuhe.en}. Its opposite (clash) is the ${r.chong.en}. These are structural relationships between Earthly Branches — fun to know, not rules for real relationships.` },
+    { q: `Does the ${a.en} year start on January 1?`, a: `No. In the popular Chinese zodiac, a new ${a.en} year begins on Chinese New Year, not January 1. BaZi year pillars commonly use Li Chun (Start of Spring) instead; dates near either boundary need care.` },
+    { q: `What does the ${a.en} represent in Chinese culture?`, a: a.cultureEn },
     { q: `What element is the ${a.en}?`, a: `The ${a.en}’s fixed element is ${a.yang ? 'Yang' : 'Yin'} ${EL_EN(a.el)} (from its branch ${a.zhi}). Each ${a.en} year also has a stem element, which is why there are Wood, Fire, Earth, Metal and Water ${a.en}s.` },
   ]
   const rows = ys.map((y) => `<tr><td><a href="${hrefEn.year(y.Y)}">${y.Y}</a></td><td>${nameEn(y)}</td><td>${y.gz} (${STEM_EN[y.gan]}-${BRANCH_EN[y.zhi]})</td><td>${dEn(y.cny)} – ${dEn(y.end)}</td></tr>`).join('')
@@ -234,14 +236,19 @@ function animalPageEn(a) {
 <h1>Year of the ${a.en}</h1>
 <div class="en">${a.zh} · Earthly Branch ${a.zhi} (${BRANCH_EN[a.zhi]})</div>
 <div class="facts"><div><b>Branch</b><span>${a.zhi} ${BRANCH_EN[a.zhi]}</span></div><div><b>Fixed element</b><span>${a.yang ? 'Yang' : 'Yin'} ${EL_EN(a.el)}</span></div><div><b>Hour</b><span>${a.hour}</span></div><div><b>Three Harmony</b><span>${r.sanhe.map((x) => x.en).join(', ')}</span></div><div><b>Six Harmony</b><span>${r.liuhe.en}</span></div><div><b>Clash</b><span>${r.chong.en}</span></div></div>
-<h2 class="sec">${a.en} personality</h2>
-<p>${a.traitEn}</p>
+<h2 class="sec">The ${a.en} in Chinese culture</h2>
 <p>${a.cultureEn}</p>
+<p>The ${a.en} is associated with the Earthly Branch ${a.zhi} (${BRANCH_EN[a.zhi]}). In the traditional twelve-branch cycle, this same sign is used for years, months and two-hour periods. The cultural story and the calendrical system are related, but they are not the same thing.</p>
+<h2 class="sec">Traditional ${a.en} personality</h2>
+<p>${a.traitEn}</p>
+<p>These descriptions are folklore, not evidence that people born in the same year share a personality. Individual character and relationships cannot be determined by a zodiac sign.</p>
 <h2 class="sec">The five kinds of ${a.en}</h2>
 <p>The animal is determined by the Earthly Branch. The year’s element comes from its Heavenly Stem, so the same animal appears with all five elements over the 60-year cycle. Examples from the year table:</p>
 <ul>${flavors}</ul>
 <h2 class="sec">Year of the ${a.en}: all dates</h2>
 <div class="table-wrap"><table><thead><tr><th>Year</th><th>Element animal</th><th>Stem-Branch</th><th>Dates (Chinese New Year to New Year’s Eve)</th></tr></thead><tbody>${rows}</tbody></table></div>
+<h2 class="sec">Traditional zodiac relationships</h2>
+<p>In the Earthly Branch system, the ${a.en} belongs to a Three Harmony group with ${r.sanhe.filter((x) => x.id !== a.id).map((x) => `<a href="${hrefEn.animal(x)}">${x.en}</a>`).join(" and "). Its Six Harmony pair is the <a href="${hrefEn.animal(r.liuhe)}">${r.liuhe.en}</a>, while its opposing branch (Six Clash) is the <a href="${hrefEn.animal(r.chong)}">${r.chong.en}</a>. These are traditional classifications of branch relationships, not scientific compatibility scores or advice on whom to date.</p>
 <h2 class="sec">The ${a.en} in a BaZi chart</h2>
 <p>The branch ${a.zhi} isn’t only a year sign. The ${a.zhi} month runs ${a.monthEn}, and the ${a.zhi} hour is ${a.hour} every day — so anyone can have a ${a.en} in their month, day or hour pillar. Your zodiac animal is just the year branch; a <a href="/en/term/sizhu/">Four Pillars</a> chart reads all eight characters.</p>
 <p class="note">Zodiac personalities are folk tradition for curiosity and fun — not a judgment of anyone and not a forecast.</p>
