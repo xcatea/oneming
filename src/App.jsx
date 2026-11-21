@@ -176,12 +176,21 @@ function Hero({ t, lang, onStart }) {
         <p className="font-en mt-4 max-w-md text-base leading-relaxed text-[var(--color-ink-soft)]">
           {t.heroLead}
         </p>
-        <button
-          onClick={onStart}
-          className="mt-8 rounded-full bg-[var(--color-ink)] px-7 py-3 text-base text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]"
-        >
-          {t.cta}
-        </button>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <button
+            onClick={onStart}
+            className="rounded-full bg-[var(--color-ink)] px-7 py-3 text-base text-[var(--color-paper)] transition hover:bg-[var(--jade-deep)]"
+          >
+            {t.cta}
+          </button>
+          <a
+            href={lang === 'en' ? '/en/chinese-zodiac/' : '/shengxiao/'}
+            onClick={() => track('zodiac_hub_click', { lang, from: 'hero' })}
+            className="rounded-full border border-[var(--color-jade)] px-6 py-3 text-sm text-[var(--color-jade)] transition hover:bg-[var(--color-jade)] hover:text-[var(--color-paper)]"
+          >
+            {lang === 'en' ? 'Discover your Chinese zodiac →' : '查生肖 →'}
+          </a>
+        </div>
       </div>
 
       {/* signature: vertical proverb */}
