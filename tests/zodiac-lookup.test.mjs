@@ -55,3 +55,19 @@ test('date checker shows the exact zodiac-year interval and flags the Li Chun-to
   assert.deepEqual(rabbit1975.slice(0, 3), ['1975-02-11', 1975, 'rabbit'])
   assert.deepEqual(rabbit1975.slice(10, 14), ['1976-01-30', '1975-02-04', '18:59', 'before'])
 })
+test('English animal pages use their own linked five-element year examples', () => {
+  const pages = new Map()
+  buildGrowth({ write: (path, html) => pages.set(path, html), ALL: [] })
+  const animals = ['rat', 'ox', 'tiger', 'rabbit', 'dragon', 'snake', 'horse', 'goat', 'monkey', 'rooster', 'dog', 'pig']
+  const elements = ['Wood', 'Fire', 'Earth', 'Metal', 'Water']
+  for (const animal of animals) {
+    const page = pages.get(`en/chinese-zodiac/${animal}/index.html`)
+    assert.ok(page, `English ${animal} page is generated`)
+    for (const element of elements) {
+      assert.match(page, new RegExp(`<strong>${element} ${animal[0].toUpperCase() + animal.slice(1)}</strong>: <a href="/en/chinese-zodiac/\\d{4}/">`))
+    }
+  }
+  const rabbit = pages.get('en/chinese-zodiac/rabbit/index.html')
+  assert.match(rabbit, /The year’s element comes from its Heavenly Stem/)
+  assert.doesNotMatch(rabbit, /ELEMENT_FLAVOR/)
+})
