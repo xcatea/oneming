@@ -190,6 +190,15 @@ function Hero({ t, lang, onStart }) {
           >
             {lang === 'en' ? 'Discover your Chinese zodiac →' : '查生肖 →'}
           </a>
+          {lang === 'en' && (
+            <a
+              href="/en/bazi-for-beginners/"
+              onClick={() => track('bazi_guide_click', { lang, from: 'hero' })}
+              className="text-sm text-[var(--color-ink-soft)] underline decoration-dotted underline-offset-4 transition hover:text-[var(--color-jade)]"
+            >
+              New to BaZi? Start here →
+            </a>
+          )}
         </div>
       </div>
 
