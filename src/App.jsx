@@ -941,7 +941,7 @@ function ChartExplainedEn({ data }) {
     <section className="mt-9 rounded-xl border border-[rgba(76,107,94,0.24)] bg-[rgba(76,107,94,0.05)] p-5" aria-labelledby="chart-explained-title">
       <h3 id="chart-explained-title" className="font-zh text-xl font-semibold">Your BaZi chart, explained</h3>
       <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-soft)]">
-        These four pillars are calculated from the birth details you entered. The notes below explain the traditional terminology, not your future or personality.
+        {data.hourKnown ? 'These four pillars' : 'These three known pillars'} are calculated from the birth details you entered. The notes below explain traditional terminology, not your future or personality.
       </p>
       <dl className="mt-4 space-y-4">
         {data.pillars.map((p) => (
@@ -968,7 +968,7 @@ function ChartExplainedEn({ data }) {
       </dl>
       <p className="mt-4 text-sm leading-relaxed text-[var(--color-ink-soft)]">
         <strong>Day Master:</strong> {data.dayGan} · {ELEMENT_META[data.dayElement].en}.
-        The Day Master is the day stem, not the zodiac animal. The Five Elements counts below summarize the stems and branches shown in your chart; they are not a measure of scientific personality traits.
+        The Day Master is the day stem, not the zodiac animal. The Five Elements counts below count the stem and branch of each {data.hourKnown ? 'calculated pillar' : 'known pillar'} (two symbols per pillar). These simple counts are not a complete assessment of traditional elemental strength, and they do not measure scientifically established personality traits.
       </p>
       <p className="mt-3 text-sm">
         <a className="text-[var(--color-jade)] underline decoration-dotted underline-offset-4" href="/en/bazi-for-beginners/">Learn the Four Pillars step by step</a>
