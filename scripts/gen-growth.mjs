@@ -171,7 +171,7 @@ ${lookupWidget('en')}
 <h2 class="sec">Chinese zodiac years chart</h2>
 <div class="table-wrap"><table><thead><tr><th>Animal</th><th>Years (tap for that year’s element, stem-branch, New Year and Lichun dates)</th></tr></thead><tbody>${rows}</tbody></table></div>
 <p class="note">Zodiac personalities are folk tradition, not a verdict on any individual. For a personal picture you need the full Four Pillars (BaZi) chart — the year is only two of its eight characters.</p>
-<a class="cta" href="/en/">Get your free BaZi chart →</a><a class="cta alt" href="/en/2027-year-of-the-fire-goat/">2027 Year of the Fire Goat →</a>
+<a class="cta" href="/en/">Get your free BaZi chart →</a><a class="cta alt" href="/en/bazi-for-beginners/">Learn BaZi step by step →</a><a class="cta alt" href="/en/2027-year-of-the-fire-goat/">2027 Year of the Fire Goat →</a>
 ${faqHtml(faqs, 'en')}
 ` + foot('en')
 }
@@ -602,7 +602,54 @@ function termHubEn(ALL) {
 <div class="en">Every term in a Four Pillars chart, in plain English</div>
 <p class="def">BaZi ("eight characters") reads the Heavenly Stems and Earthly Branches of your birth year, month, day and hour. Here is every term you’ll meet in a chart — what it is, how it interacts, and where it comes from. We explain; we don’t predict.</p>
 <a class="cta" href="/en/">Calculate your free chart →</a>
+<p>New to Four Pillars? <a href="/en/bazi-for-beginners/">Read the BaZi beginner’s guide</a> before exploring the glossary.</p>
 ${groups}
+` + foot('en')
+}
+
+// ================= English BaZi beginner's guide =================
+function baziBeginnerGuideEn() {
+  const url = `${BASE}/en/bazi-for-beginners/`
+  const title = 'BaZi for Beginners: Four Pillars, Day Master & Five Elements | ONEMING'
+  const desc = 'A beginner-friendly guide to BaZi (Four Pillars): what the eight characters mean, how year and day pillars differ, the Five Elements, Ten Gods and the Li Chun boundary.'
+  const faqs = [
+    { q: 'Is BaZi the same as the Chinese zodiac?', a: 'No. The popular Chinese zodiac uses the animal associated with a lunar year. BaZi considers the Heavenly Stem and Earthly Branch of the year, month, day and hour, using solar-term boundaries for the year and month pillars.' },
+    { q: 'What is the Day Master in BaZi?', a: 'The Day Master is the Heavenly Stem of the day pillar. It is the reference point for the traditional Five Elements and Ten Gods relationships in a BaZi chart.' },
+    { q: 'Why does my BaZi year animal differ from my Chinese zodiac animal?', a: 'The popular zodiac usually changes at Chinese New Year. BaZi year pillars commonly change at Li Chun (Start of Spring). A birth near these dates can therefore show different year animals.' },
+    { q: 'Do I need to know my birth hour?', a: 'An exact birth hour is needed to calculate the time pillar. If you do not know it, you can still examine the three known pillars, but the chart is incomplete.' },
+  ]
+  return head(title, desc, url, { lang: 'en', ads: true }) +
+    articleLd({ title, description: desc, url, lang: 'en' }) +
+    breadcrumbLd([{ name: 'Home', item: `${BASE}/en/` }, { name: 'BaZi for Beginners', item: url }]) +
+    faqLd(faqs) + `
+<nav class="crumb"><a href="/en/">Home</a> / BaZi for Beginners</nav>
+<h1>BaZi for Beginners: Understanding the Four Pillars</h1>
+<div class="en">Eight characters · Five Elements · Day Master · Ten Gods</div>
+<p class="def"><strong>BaZi (八字)</strong> means “eight characters.” In traditional Chinese calendrical practice, a birth date and time are represented by four pairs of symbols, one pair each for the year, month, day and hour. Each pair consists of a Heavenly Stem and an Earthly Branch. Together, they form the Four Pillars (四柱).</p>
+<h2 class="sec">The four pillars at a glance</h2>
+<div class="table-wrap"><table><thead><tr><th>Pillar</th><th>What it records</th><th>What to remember</th></tr></thead><tbody>
+<tr><td>Year</td><td>Year stem and branch</td><td>Not necessarily the same boundary as the popular lunar-year zodiac</td></tr>
+<tr><td>Month</td><td>Month stem and branch</td><td>Traditionally calculated using solar terms, not simply Gregorian calendar months</td></tr>
+<tr><td>Day</td><td>Day stem and branch</td><td>The day stem is called the <a href="/en/term/rizhu/">Day Master</a></td></tr>
+<tr><td>Hour</td><td>Hour stem and branch</td><td>Depends on birth time and the time-calculation convention used</td></tr>
+</tbody></table></div>
+<p>Four pillars contain eight characters in total. If your birth hour is unknown, you can examine the year, month and day pillars, but you do not have a complete eight-character chart.</p>
+<h2 class="sec">BaZi versus the Chinese zodiac</h2>
+<p>The familiar <a href="/en/chinese-zodiac/">Chinese zodiac</a> names twelve animals, such as Rabbit, Tiger and Dragon. In popular usage the animal changes at Chinese New Year. In BaZi, the year pillar commonly changes at <strong>Li Chun (立春)</strong>, the Start of Spring solar term, which usually occurs around February 4. The two boundaries can fall on different days.</p>
+<p>For example, Chinese New Year in 1975 began on February 11. Li Chun occurred earlier, on February 4. Someone born between these boundaries can be a Tiger under the popular zodiac convention while having the Yi-Mao (Wood Rabbit) BaZi year pillar. The exact Li Chun date and time must be considered for boundary-day births. <a href="/en/chinese-zodiac/1975/">See the 1975 example</a>.</p>
+<h2 class="sec">Heavenly Stems, Earthly Branches and the Five Elements</h2>
+<p>There are ten Heavenly Stems and twelve Earthly Branches. Their pairings repeat in a 60-step cycle. Traditional Chinese thought also associates these symbols with <a href="/en/term/wuxing/">Five Elements</a>: Wood, Fire, Earth, Metal and Water. These elements are symbolic categories of change and relationship, not chemical elements.</p>
+<p>To explore the generating (Sheng) and controlling (Ke) cycles, use the <a href="/en/five-element-colors/">interactive Five Elements guide</a>. An element assigned to a year's Heavenly Stem is not necessarily the same as its poetic <a href="/en/term/nayin/">Na Yin</a> designation.</p>
+<h2 class="sec">What is the Day Master?</h2>
+<p>The <a href="/en/term/rizhu/">Day Master</a> is the Heavenly Stem of the day pillar. In traditional interpretation, it serves as a reference point for comparing the elements and the other stems in a chart. It is not determined from your zodiac animal alone.</p>
+<h2 class="sec">What are the Ten Gods?</h2>
+<p>The <a href="/en/term/shishen/">Ten Gods</a> (十神) are names for relationships between other stems and the Day Master, based on the Five Elements and Yin–Yang polarity. Despite the English name, they are not literal deities. They are categories used within the traditional interpretive system.</p>
+<h2 class="sec">How to read a chart without treating it as a prediction</h2>
+<p>Start by identifying the four pillars, then locate the Day Master and observe the Five Elements relationships. Use the glossary to understand each term rather than treating any single label as a verdict about your character, career or relationships. BaZi is a cultural interpretive tradition, not a scientifically validated way to forecast the future.</p>
+<a class="cta" href="/en/">Calculate your free BaZi chart →</a>
+<a class="cta alt" href="/en/term/">Explore the BaZi glossary →</a>
+${faqHtml(faqs, 'en')}
+<div class="more"><h2>Continue learning</h2><a href="/en/chinese-zodiac/">Chinese Zodiac</a><a href="/en/five-element-colors/">Five Elements</a><a href="/en/term/rizhu/">Day Master</a><a href="/en/term/shishen/">Ten Gods</a></div>
 ` + foot('en')
 }
 
@@ -649,6 +696,7 @@ export function buildGrowth({ write, ALL }) {
 
   // 英文词条与信任页
   put('/en/term/', termHubEn(ALL))
+  put('/en/bazi-for-beginners/', baziBeginnerGuideEn())
   for (const t of ALL) put(`/en/term/${t.id}/`, termPageEn(t, ALL))
   for (const p of LEGAL_EN) write(`en/${p.id}/index.html`, legalPageEn(p))
 
