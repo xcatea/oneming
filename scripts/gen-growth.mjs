@@ -316,9 +316,20 @@ function yearPageEn(Y) {
     { q: `What animal is ${Y} in the Chinese zodiac?`, a: `${Y} is the Year of the ${a.en} — specifically the ${nameEn(y)}, because its Heavenly Stem ${y.gan} (${STEM_EN[y.gan]}) is ${y.yang ? 'Yang' : 'Yin'} ${EL_EN(y.el)}. It begins on ${dEn(y.cny)}.` },
     { q: `What if I was born in January ${Y}?`, a: `Chinese New Year ${Y} fell on ${dEn(y.cny)}. Anyone born before that date belongs to the previous year — the ${nameEn(yearInfo(Y - 1))} (${yearInfo(Y - 1).gz}).` },
     { q: `What is the Na Yin element of ${Y}?`, a: `${y.gz} years carry the Na Yin "${y.nayin}" — ${NAYIN_EN[y.nayin] || ''}. Na Yin is a poetic secondary element assigned to each pair of stem-branch years; it’s different from the stem element used in "${nameEn(y)}".` },
+    ...(Y === 1975 ? [{ q: 'Why is 1975 called the Wood Rabbit year?', a: '1975 is Yi-Mao (乙卯). Yi (乙), the Heavenly Stem, is associated with Yin Wood; Mao (卯), the Earthly Branch, is the Rabbit. The Na Yin label for Yi-Mao is Da Xi Shui (大溪水), often translated as Big Stream Water. These are different traditional classification layers, not conflicting answers.' }] : []),
   ]
   const prevY = Y > YEAR_FROM ? `<a href="${hrefEn.year(Y - 1)}">← ${Y - 1} ${yearInfo(Y - 1).animal.en}</a>` : ''
   const nextY = Y < YEAR_TO ? `<a href="${hrefEn.year(Y + 1)}">${Y + 1} ${yearInfo(Y + 1).animal.en} →</a>` : ''
+  const yearSpecificEn = Y === 1975 ? `
+<h2 class="sec">Why 1975 is called the Wood Rabbit year</h2>
+<p>The 1975 year pillar is <strong>Yi-Mao (乙卯)</strong>. Yi (乙) is the second Heavenly Stem and is traditionally associated with <strong>Yin Wood</strong>. Mao (卯) is the Rabbit branch. Together, they give the familiar name <strong>Wood Rabbit</strong>.</p>
+<p>There is a second label you may see: the Na Yin of Yi-Mao is <strong>Da Xi Shui (大溪水)</strong>, often translated as <strong>Big Stream Water</strong>. This does not cancel the Wood designation. The stem's Five Element association and the Na Yin classification are two different layers of the traditional system.</p>
+<h2 class="sec">Wood Rabbit in traditional symbolism</h2>
+<p>In popular zodiac interpretations, Rabbit imagery is often associated with tact, alertness, gentleness and a preference for harmony. Wood is commonly used as a symbol of growth, flexibility and cultivation. Some traditional readings combine these images to describe the Wood Rabbit as cooperative, thoughtful and adaptable.</p>
+<p>These are cultural associations, not scientifically validated personality traits. A birth-year animal cannot tell you who someone is, and it cannot predict their career, finances, health or relationships. Different traditions and authors may interpret the same symbol differently.</p>
+<h2 class="sec">A note for February 1975 birthdays</h2>
+<p>The popular zodiac year changed at Chinese New Year on ${dEn(y.cny)}. BaZi uses the Lichun (Start of Spring) solar-term boundary instead, which fell on ${dEn(y.lichun)} at ${tHm(y.lichun)} Beijing time. A person born between those two boundaries may be a Tiger by the popular lunar-year zodiac while already having a Yi-Mao BaZi year pillar. For a precise chart near either boundary, birth time and location matter.</p>
+` : ''
   return head(title, desc, url, { lang: 'en', ads: true, alt: { zh: `${BASE}${hrefZh.year(Y)}`, en: url } }) +
     articleLd({ title, description: desc, url, lang: 'en' }) + faqLd(faqs) +
     breadcrumbLd([{ name: 'Home', item: `${BASE}/en/` }, { name: 'Chinese Zodiac', item: `${BASE}/en/chinese-zodiac/` }, { name: String(Y), item: url }]) + `
@@ -335,6 +346,7 @@ function yearPageEn(Y) {
 <h2 class="sec">${a.en} personality</h2>
 <p>${a.traitEn}</p>
 <p>${ELEMENT_FLAVOR[y.el].en}</p>
+${yearSpecificEn}
 <p><a href="${hrefEn.animal(a)}">All about the ${a.en}: compatibility and every ${a.en} year →</a></p>
 <h2 class="sec">The 60-year cycle</h2>
 <p>Stem-branch years repeat every 60 years. The previous ${y.gz} year was ${Y - 60}; the next will be ${Y + 60}.</p>
