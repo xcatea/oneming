@@ -48,3 +48,26 @@ test('英文解读文本不混入中文标点', () => {
   const a = analyzeChart(computeBazi(1992, 3, 18, 9, 30, 'female', 'en'), 'en')
   for (const s of [a.traits.core, a.traits.leverage, a.favor.logic, a.strength.reason]) assert.doesNotMatch(s, /[。，；]/)
 })
+
+test('1975 Chinese zodiac year begins at Chinese New Year (not January 1)', async () => {
+  const { Lunar } = await import('lunar-javascript')
+  const start = Lunar.fromYmd(1975, 1, 1).getSolar()
+  const nextStart = Lunar.fromYmd(1976, 1, 1).getSolar()
+  const end = nextStart.next(-1)
+  assert.deepEqual([start.getYear(), start.getMonth(), start.getDay()], [1975, 2, 11])
+  assert.deepEqual([end.getYear(), end.getMonth(), end.getDay()], [1976, 1, 30])
+})
+
+test('1975 BaZi year pillar changes at Lichun, before Chinese New Year', () => {
+  const before = computeBazi(1975, 2, 4, 18, 50)
+  const after = computeBazi(1975, 2, 4, 19, 10)
+  assert.equal(gz(before, 'year'), '甲寅')
+  assert.equal(gz(after, 'year'), '乙卯')
+})
+
+test('1975 Wood Rabbit stem-branch and Na Yin labels remain distinct', async () => {
+  const { Lunar } = await import('lunar-javascript')
+  const lunarNewYear = Lunar.fromYmd(1975, 1, 1)
+  assert.equal(lunarNewYear.getYearInGanZhi(), '乙卯')
+  assert.equal(lunarNewYear.getYearNaYin(), '大溪水')
+})
