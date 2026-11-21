@@ -88,12 +88,8 @@ test('twelve English animal pages explain culture, calendrical branches and trad
   for (const animal of ['rat','ox','tiger','rabbit','dragon','snake','horse','goat','monkey','rooster','dog','pig']) {
     const html = pages.get(`en/chinese-zodiac/${animal}/index.html`)
     assert.ok(html)
-    assert.match(html, /in Chinese culture<\\/h2>/)
-    assert.match(html, /Traditional zodiac relationships/)
-    assert.match(html, /These descriptions are folklore/)
-    assert.match(html, /year start on January 1/)
-    assert.match(html, /Six Harmony pair is the <a href="\\/en\\/chinese-zodiac\\//)
-    assert.match(html, /Three Harmony group with <a href="\\/en\\/chinese-zodiac\\//)
-    assert.match(html, /BaZi year pillars commonly use Li Chun/)
+    for (const phrase of ['in Chinese culture</h2>', 'Traditional zodiac relationships', 'These descriptions are folklore', 'year start on January 1', 'Six Harmony pair is the <a href="/en/chinese-zodiac/', 'Three Harmony group with <a href="/en/chinese-zodiac/', 'BaZi year pillars commonly use Li Chun']) {
+      assert.ok(html.includes(phrase), `${animal}: missing ${phrase}`)
+    }
   }
 })
