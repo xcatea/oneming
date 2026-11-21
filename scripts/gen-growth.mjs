@@ -323,6 +323,17 @@ function yearPageEn(Y) {
   ]
   const prevY = Y > YEAR_FROM ? `<a href="${hrefEn.year(Y - 1)}">← ${Y - 1} ${yearInfo(Y - 1).animal.en}</a>` : ''
   const nextY = Y < YEAR_TO ? `<a href="${hrefEn.year(Y + 1)}">${Y + 1} ${yearInfo(Y + 1).animal.en} →</a>` : ''
+  const sourcesEn = Y === 1975 ? `
+<div class="sources">
+<h2>Calendar and classical references</h2>
+<ul>
+<li><a href="https://www.hko.gov.hk/en/gts/time/calendar/pdf/files/1975e.pdf" rel="noopener noreferrer">Hong Kong Observatory: 1975 Gregorian–Lunar Calendar Conversion Table</a> — reference for the 1975 lunar calendar and Chinese New Year date.</li>
+<li><a href="https://www.hko.gov.hk/en/gts/time/conversion.htm" rel="noopener noreferrer">Hong Kong Observatory: Gregorian–Lunar Calendar Conversion Table</a> — explains the calendar conversion framework and its date coverage.</li>
+<li><a href="https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83/%E5%8D%B7%E4%B8%80" rel="noopener noreferrer">San Ming Tong Hui (三命通會), Volume 1</a> — classical text listing “甲寅乙卯大溪水” in its Na Yin discussion.</li>
+</ul>
+<p class="src">The Li Chun time shown on this page is calculated by the site's calendar engine and expressed in Beijing time (UTC+8). Calendar conventions can differ: the popular zodiac animal changes at Chinese New Year, while BaZi year-pillar calculations commonly use Li Chun.</p>
+</div>
+` : ''
   const yearSpecificEn = Y === 1975 ? `
 <h2 class="sec">Why 1975 is called the Wood Rabbit year</h2>
 <p>The 1975 year pillar is <strong>Yi-Mao (乙卯)</strong>. Yi (乙) is the second Heavenly Stem and is traditionally associated with <strong>Yin Wood</strong>. Mao (卯) is the Rabbit branch. Together, they give the familiar name <strong>Wood Rabbit</strong>.</p>
@@ -350,6 +361,7 @@ function yearPageEn(Y) {
 <p>${a.traitEn}</p>
 <p>${ELEMENT_FLAVOR[y.el].en}</p>
 ${yearSpecificEn}
+${sourcesEn}
 <p><a href="${hrefEn.animal(a)}">All about the ${a.en}: compatibility and every ${a.en} year →</a></p>
 <h2 class="sec">The 60-year cycle</h2>
 <p>Stem-branch years repeat every 60 years. The previous ${y.gz} year was ${Y - 60}; the next will be ${Y + 60}.</p>
