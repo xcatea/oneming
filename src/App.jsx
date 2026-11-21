@@ -8,6 +8,7 @@ import { generateReading, fallbackProse, validateReading } from './reading.js'
 import { TERM_BY_ID } from './terms.js'
 import { SITE, MONETIZE } from './site.config.js'
 import { SHISHEN_EN, NAYIN_EN } from './wuxing.js'
+import { zodiacLabel } from './zodiac-label.js'
 import { track } from './track.js'
 
 // 变现位全部由 site.config.js 驱动：留空即隐藏
@@ -991,9 +992,9 @@ function Result({ data, input, t, lang, onTerm }) {
         <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-[var(--color-ink-soft)]">
           <span>{data.solarText}</span>
           {lang !== 'en' && <span>· {t.resultLunar} {data.lunarText}</span>}
-          <span>· {t.shengxiao} {data.shengxiao}</span>
+          <span>· {lang === 'en' ? 'Lunar zodiac' : t.shengxiao} {zodiacLabel(data.shengxiao, lang)}</span>
           <span>· {t.xingzuo} {data.xingzuo}</span>
-          <span>· {t.dayMaster} {data.dayGan}（{ELEMENT_META[data.dayElement][lang === 'en' ? 'en' : 'zh']}）</span>
+          <span>· {t.dayMaster} {data.dayGan} {lang === 'en' ? `(${ELEMENT_META[data.dayElement].en})` : `（${ELEMENT_META[data.dayElement].zh}）`}</span>
         </div>
 
         {data.fix?.changed && (
