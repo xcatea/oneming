@@ -583,6 +583,7 @@ function termPageEn(t, ALL) {
 <h1>${esc(t.en)}${t.kind === 'rizhu' ? ' Day Master' : ''}</h1>
 <div class="en">${esc(t.zh)}</div>
 <p class="def">${esc(t.defEn)}</p>
+<p class="src">New to BaZi? Start with the <a href="/en/bazi-for-beginners/">beginner’s guide to the Four Pillars</a>, then return here to explore this term in more detail.</p>
 <div class="box"><div class="lab">HOW IT INTERACTS</div>${esc(t.relEn)}</div>
 <h2 class="sec">Where you’ll see it</h2>
 <p>${k.how}</p>

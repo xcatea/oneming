@@ -131,3 +131,14 @@ test('English BaZi beginner guide is generated and linked from both entry hubs',
   assert.ok(html.includes('<link rel="canonical" href="https://oneming.net/en/bazi-for-beginners/"'))
   assert.ok(html.includes('application/ld+json'))
 })
+
+test('English glossary entries link back to the BaZi beginner learning guide', () => {
+  const pages = new Map()
+  const sample = [{ id: 'rizhu-test', kind: 'rizhu', en: 'Day Master', zh: '日主', defEn: 'The Day Master is the day stem.', relEn: 'It is the reference point for traditional relationships.', src: '滴天髓' }]
+  buildGrowth({ write: (path, html) => pages.set(path, html), ALL: sample })
+  const html = pages.get('en/term/rizhu-test/index.html')
+  assert.ok(html)
+  assert.ok(html.includes('/en/bazi-for-beginners/'))
+  assert.ok(html.includes('beginner’s guide to the Four Pillars'))
+  assert.ok(html.includes('HOW IT INTERACTS'))
+})
