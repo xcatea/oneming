@@ -8,7 +8,7 @@ import { generateReading, fallbackProse, validateReading } from './reading.js'
 import { TERM_BY_ID } from './terms.js'
 import { SITE, MONETIZE } from './site.config.js'
 import { SHISHEN_EN, NAYIN_EN } from './wuxing.js'
-import { zodiacLabel } from './zodiac-label.js'
+import { zodiacLabel, sunSignLabel } from './zodiac-label.js'
 import { track } from './track.js'
 
 // 变现位全部由 site.config.js 驱动：留空即隐藏
@@ -412,12 +412,12 @@ function BaziForm({ t, lang, onSubmit, initial }) {
 
 function Pillar({ p, lang }) {
   return (
-    <div className="pillar rise flex flex-col items-center rounded-xl px-2 py-4">
+    <div className="pillar rise flex min-w-0 flex-col items-center rounded-xl px-1 py-4 sm:px-2">
       <span className="mb-3 text-xs tracking-wider text-[var(--color-ink-soft)]">{lang === 'en' ? p.labelEn : p.labelZh}</span>
       <span className="pillar-glyph text-4xl md:text-5xl" style={{ color: ELEMENT_META[p.ganElement].color }}>{p.gan}</span>
       <span className="pillar-glyph mt-1 text-4xl md:text-5xl" style={{ color: ELEMENT_META[p.zhiElement].color }}>{p.zhi}</span>
-      <span className="mt-3 text-center text-[11px] leading-tight text-[var(--color-ink-soft)]">{lang === 'en' ? SHISHEN_EN[p.shishen] || p.shishen : p.shishen}</span>
-      <span className="mt-0.5 text-center text-[11px] leading-tight text-[var(--color-ink-soft)]" title={p.nayin}>{lang === 'en' ? NAYIN_EN[p.nayin] || p.nayin : p.nayin}</span>
+      <span className="mt-3 max-w-full break-words text-center text-[10px] leading-tight text-[var(--color-ink-soft)] sm:text-[11px]">{lang === 'en' ? SHISHEN_EN[p.shishen] || p.shishen : p.shishen}</span>
+      <span className="mt-0.5 max-w-full break-words text-center text-[10px] leading-tight text-[var(--color-ink-soft)] sm:text-[11px]" title={p.nayin}>{lang === 'en' ? NAYIN_EN[p.nayin] || p.nayin : p.nayin}</span>
     </div>
   )
 }
@@ -993,7 +993,7 @@ function Result({ data, input, t, lang, onTerm }) {
           <span>{data.solarText}</span>
           {lang !== 'en' && <span>· {t.resultLunar} {data.lunarText}</span>}
           <span>· {lang === 'en' ? 'Lunar zodiac' : t.shengxiao} {zodiacLabel(data.shengxiao, lang)}</span>
-          <span>· {t.xingzuo} {data.xingzuo}</span>
+          <span>· {t.xingzuo} {sunSignLabel(data.xingzuo, lang)}</span>
           <span>· {t.dayMaster} {data.dayGan} {lang === 'en' ? `(${ELEMENT_META[data.dayElement].en})` : `（${ELEMENT_META[data.dayElement].zh}）`}</span>
         </div>
 
@@ -1009,7 +1009,7 @@ function Result({ data, input, t, lang, onTerm }) {
         <SaveShare input={input} t={t} lang={lang} />
 
         {/* four pillars */}
-        <div className="mt-7 grid grid-cols-4 gap-2.5 md:gap-4">
+        <div className="mt-7 grid grid-cols-4 gap-1.5 sm:gap-2.5 md:gap-4">
           {data.pillars.map((p) => <Pillar key={p.key} p={p} lang={lang} />)}
           {!data.hourKnown && <PillarUnknown t={t} />}
         </div>

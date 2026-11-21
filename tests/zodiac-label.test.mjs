@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { ZODIAC_ANIMAL_EN, zodiacLabel } from '../src/zodiac-label.js'
+import { ZODIAC_ANIMAL_EN, WESTERN_SIGN_EN, zodiacLabel, sunSignLabel } from '../src/zodiac-label.js'
 import { computeBazi } from '../src/bazi.js'
 
 test('all twelve lunar zodiac animals have English labels', () => {
@@ -19,4 +19,18 @@ test('lunar zodiac label is independent of BaZi year pillar around Li Chun', () 
 
 test('unknown animal labels are not silently replaced with invented translations', () => {
   assert.equal(zodiacLabel('?', 'en'), '?')
+})
+
+test('all twelve Western sun signs are translated for English results', () => {
+  const signs = ['白羊', '金牛', '双子', '巨蟹', '狮子', '处女', '天秤', '天蝎', '射手', '摩羯', '水瓶', '双鱼']
+  for (const zh of signs) {
+    assert.ok(WESTERN_SIGN_EN[zh], zh)
+    assert.equal(sunSignLabel(zh, 'en'), WESTERN_SIGN_EN[zh])
+    assert.equal(sunSignLabel(zh, 'zh'), zh)
+  }
+})
+
+test('computed sun sign is readable in English', () => {
+  const chart = computeBazi(1990, 3, 25, 12, 0, 'male', 'en')
+  assert.equal(sunSignLabel(chart.xingzuo, 'en'), 'Aries')
 })
