@@ -81,3 +81,19 @@ test('Li Chun date itself gets a time-sensitive note and valid result container 
   const script = hub.split('<script>').slice(1).map((part) => part.split('</script>')[0]).join('\n')
   assert.doesNotThrow(() => new Function(script))
 })
+
+test('twelve English animal pages explain culture, calendrical branches and traditional relationships', () => {
+  const pages = new Map()
+  buildGrowth({ write: (path, html) => pages.set(path, html), ALL: [] })
+  for (const animal of ['rat','ox','tiger','rabbit','dragon','snake','horse','goat','monkey','rooster','dog','pig']) {
+    const html = pages.get(`en/chinese-zodiac/${animal}/index.html`)
+    assert.ok(html)
+    assert.match(html, /in Chinese culture<\\/h2>/)
+    assert.match(html, /Traditional zodiac relationships/)
+    assert.match(html, /These descriptions are folklore/)
+    assert.match(html, /year start on January 1/)
+    assert.match(html, /Six Harmony pair is the <a href="\\/en\\/chinese-zodiac\\//)
+    assert.match(html, /Three Harmony group with <a href="\\/en\\/chinese-zodiac\\//)
+    assert.match(html, /BaZi year pillars commonly use Li Chun/)
+  }
+})
