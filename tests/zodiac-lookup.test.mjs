@@ -19,4 +19,17 @@ test('zodiac date checker covers 1900–2100 while detailed year pages stay boun
   assert.match(woodRabbit, /Li Chun time shown on this page/)
   const otherYear = pages.get('en/chinese-zodiac/1976/index.html')
   assert.doesNotMatch(otherYear, /1975e\.pdf/)
+  const queryYears = [
+    [1986, '1986e\\.pdf', 'Fire Tiger', '丙寅'],
+    [1995, '1995e\\.pdf', 'Wood Pig', '乙亥'],
+    [1998, '1998e\\.pdf', 'Earth Tiger', '戊寅'],
+  ]
+  for (const [year, source, label, stemBranch] of queryYears) {
+    const page = pages.get(`en/chinese-zodiac/${year}/index.html`)
+    assert.ok(page, `year page ${year} is generated`)
+    assert.match(page, new RegExp(source))
+    assert.match(page, new RegExp(label))
+    assert.match(page, new RegExp(stemBranch))
+    assert.match(page, /San Ming Tong Hui/)
+  }
 })
