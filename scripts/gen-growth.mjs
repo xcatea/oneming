@@ -8,6 +8,9 @@ import { MONETIZE, SITE } from '../src/site.config.js'
 
 const YEAR_FROM = 1930
 const YEAR_TO = 2035
+// The interactive date checker covers a wider range than the published year-guide URLs.
+const LOOKUP_YEAR_FROM = 1900
+const LOOKUP_YEAR_TO = 2100
 
 const EL_ZH = (e) => ELEMENT_META[e].zh
 const EL_EN = (e) => ELEMENT_META[e].en
@@ -70,19 +73,19 @@ function relationsOf(a) {
 // —— 生肖速查小工具 + 生肖卡片（纯前端、无依赖；春节日期在构建时算好内联）——
 function lookupWidget(lang) {
   const data = []
-  for (let Y = YEAR_FROM - 1; Y <= YEAR_TO; Y++) {
+  for (let Y = LOOKUP_YEAR_FROM - 1; Y <= LOOKUP_YEAR_TO; Y++) {
     const y = yearInfo(Y)
     data.push([ymd(y.cny), Y, y.animal.id, lang === 'en' ? `${nameEn(y)} (${y.gz})` : `${y.gz} ${nameZh(y)}`, lang === 'en' ? y.animal.en : y.animal.zh,
       y.animal.zh, ELEMENT_META[y.el].color, lang === 'en' ? y.animal.kwEn : y.animal.kwZh, y.gz, lang === 'en' ? nameEn(y) : nameZh(y)])
   }
   const t = lang === 'en'
-    ? { lab: 'Enter your birth date', btn: 'Find my animal', res: 'You are a', yr: 'See your year', range: `Supports ${YEAR_FROM}–${YEAR_TO}.`, card: 'Make my zodiac card', save: 'Save image', me: 'I am a', foot: 'Find yours at', url: `${SITE.domain}/en/chinese-zodiac` }
-    : { lab: '输入公历生日', btn: '查生肖', res: '你属', yr: '查看这一年', range: `支持 ${YEAR_FROM}—${YEAR_TO} 年。`, card: '生成我的生肖卡片', save: '保存图片', me: '我属', foot: '查你的生肖', url: `${SITE.domain}/shengxiao` }
+    ? { lab: 'Enter your birth date', btn: 'Find my animal', res: 'You are a', yr: 'See your year', range: `Date checker: ${LOOKUP_YEAR_FROM}–${LOOKUP_YEAR_TO}. Detailed year guides: ${YEAR_FROM}–${YEAR_TO}.`, card: 'Make my zodiac card', save: 'Save image', me: 'I am a', foot: 'Find yours at', url: `${SITE.domain}/en/chinese-zodiac` }
+    : { lab: '输入公历生日', btn: '查生肖', res: '你属', yr: '查看这一年', range: `生肖速查：${LOOKUP_YEAR_FROM}—${LOOKUP_YEAR_TO} 年；详细年份页：${YEAR_FROM}—${YEAR_TO} 年。`, card: '生成我的生肖卡片', save: '保存图片', me: '我属', foot: '查你的生肖', url: `${SITE.domain}/shengxiao` }
   const base = lang === 'en' ? '/en/chinese-zodiac/' : '/shengxiao/'
   const btnCss = 'padding:9px 18px;border:0;border-radius:999px;background:#4c6b5e;color:#ece5d6;font:inherit;cursor:pointer'
   return `<div class="box" id="zodiac-lookup"><div class="lab">${t.lab}</div>
 <form onsubmit="return zl(event)" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-<input type="date" id="zl-d" required min="${YEAR_FROM}-01-01" max="${YEAR_TO}-12-31" value="1990-06-15" style="padding:8px 10px;border:1px solid rgba(33,29,24,.2);border-radius:8px;background:rgba(255,255,255,.6);font:inherit">
+<input type="date" id="zl-d" required min="${LOOKUP_YEAR_FROM}-01-01" max="${LOOKUP_YEAR_TO}-12-31" value="1990-06-15" style="padding:8px 10px;border:1px solid rgba(33,29,24,.2);border-radius:8px;background:rgba(255,255,255,.6);font:inherit">
 <button style="${btnCss}">${t.btn}</button></form>
 <p id="zl-r" style="margin:10px 0 0;font-size:17px"></p>
 <div id="zl-card" style="display:none;margin-top:12px"><button type="button" id="zl-mk" onclick="zc()" style="${btnCss};background:#211d18">${t.card}</button>
@@ -90,7 +93,7 @@ function lookupWidget(lang) {
 <a id="zl-dl" download="zodiac-card.png" style="display:inline-block;margin-top:10px;${btnCss};text-decoration:none">${t.save}</a></div></div>
 <p class="src" style="margin:4px 0 0">${t.range}</p></div>
 <script>var ZD=${JSON.stringify(data)},ZH=null;
-function zl(e){e.preventDefault();var v=document.getElementById('zl-d').value,h=null;for(var i=0;i<ZD.length;i++){if(ZD[i][0]<=v)h=ZD[i];else break}var r=document.getElementById('zl-r');ZH=h;document.getElementById('zl-out').style.display='none';if(!h){r.textContent='';document.getElementById('zl-card').style.display='none';return false}r.innerHTML='${t.res} <strong>'+h[4]+'</strong> · '+h[3]+' · <a href="${base}'+h[2]+'/">'+h[4]+' →</a>'+(h[1]>=${YEAR_FROM}?' · <a href="${base}'+h[1]+'/">${t.yr} '+h[1]+' →</a>':'');document.getElementById('zl-card').style.display='block';if(window.gtag)gtag('event','zodiac_lookup',{lang:'${lang}'});return false}
+function zl(e){e.preventDefault();var v=document.getElementById('zl-d').value,h=null;for(var i=0;i<ZD.length;i++){if(ZD[i][0]<=v)h=ZD[i];else break}var r=document.getElementById('zl-r');ZH=h;document.getElementById('zl-out').style.display='none';if(!h){r.textContent='';document.getElementById('zl-card').style.display='none';return false}r.innerHTML='${t.res} <strong>'+h[4]+'</strong> · '+h[3]+' · <a href="${base}'+h[2]+'/">'+h[4]+' →</a>'+(h[1]>=${YEAR_FROM}&&h[1]<=${YEAR_TO}?' · <a href="${base}'+h[1]+'/">${t.yr} '+h[1]+' →</a>':'');document.getElementById('zl-card').style.display='block';if(window.gtag)gtag('event','zodiac_lookup',{lang:'${lang}'});return false}
 function zc(){if(!ZH)return;var c=document.getElementById('zl-cv'),x=c.getContext('2d'),W=1080,H=1440,S='"Noto Serif SC","Songti SC","STSong","SimSun",Georgia,serif';
 x.fillStyle='#ece5d6';x.fillRect(0,0,W,H);x.fillStyle='rgba(0,0,0,.02)';x.beginPath();x.arc(W*.85,H*.12,300,0,7);x.fill();x.beginPath();x.arc(W*.1,H*.88,280,0,7);x.fill();
 x.strokeStyle='rgba(33,29,24,.14)';x.lineWidth=2;x.strokeRect(40,40,W-80,H-80);
@@ -140,8 +143,8 @@ ${faqHtml(faqs)}
 
 function zodiacHubEn() {
   const url = `${BASE}/en/chinese-zodiac/`
-  const title = 'Chinese Zodiac Calculator & Years Chart (1930–2035) | ONEMING'
-  const desc = 'What is my Chinese zodiac? Enter your birth date — we use the exact Chinese New Year date for every year. See each year’s animal, element, stem-branch and Na Yin, plus all 12 animal personalities and compatibility groups.'
+  const title = 'Chinese Zodiac Calculator & Years Chart (1900–2100) | ONEMING'
+  const desc = 'Find your Chinese zodiac animal by birth date. The date checker covers 1900–2100 using Chinese New Year boundaries; detailed year guides cover 1930–2035, with animal, element, stem-branch and Na Yin explanations.'
   const faqs = [
     { q: 'Does the Chinese zodiac year start on January 1?', a: 'No. The zodiac animal changes at Chinese New Year, which falls between January 21 and February 20. If you were born in January or early February, you may belong to the previous year’s animal — the calculator above checks the exact date.' },
     { q: 'Why do BaZi charts sometimes show a different year animal?', a: 'Folk custom switches animals at Chinese New Year, but BaZi (Four Pillars) uses Lichun, the "Start of Spring" solar term around February 4. Births between the two dates can have a different year pillar from their folk zodiac animal.' },
@@ -155,7 +158,7 @@ function zodiacHubEn() {
   return head(title, desc, url, { lang: 'en', ads: true, alt: { zh: `${BASE}/shengxiao/`, en: url } }) + articleLd({ title, description: desc, url, lang: 'en' }) + faqLd(faqs) + `
 <nav class="crumb"><a href="/en/">Home</a> / Chinese Zodiac</nav>
 <h1>Chinese Zodiac Calculator &amp; Years Chart</h1>
-<div class="en">What’s my Chinese zodiac animal? · ${YEAR_FROM}–${YEAR_TO}</div>
+<div class="en">What’s my Chinese zodiac animal? · Date checker ${LOOKUP_YEAR_FROM}–${LOOKUP_YEAR_TO} · Year guides ${YEAR_FROM}–${YEAR_TO}</div>
 <p class="def">The twelve animals follow the twelve Earthly Branches: Rat, Ox, Tiger, Rabbit, Dragon, Snake, Horse, Goat, Monkey, Rooster, Dog and Pig. Enter your birth date below — we use the exact Chinese New Year date for every year, so January and February birthdays come out right.</p>
 ${lookupWidget('en')}
 <h2 class="sec">The 12 animals</h2>
