@@ -464,11 +464,28 @@ function TermLink({ id, onTerm, children }) {
 
 function TermModal({ id, lang, t, onClose }) {
   const closeRef = useRef(null)
+  const dialogRef = useRef(null)
   useEffect(() => {
     const previouslyFocused = document.activeElement
     closeRef.current?.focus()
     const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+      }
+      if (event.key === 'Tab' && dialogRef.current) {
+        const focusable = [...dialogRef.current.querySelectorAll('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter((el) => !el.disabled)
+        if (!focusable.length) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
+      }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => {
@@ -488,6 +505,7 @@ function TermModal({ id, lang, t, onClose }) {
       <div
         className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-[var(--color-paper)] p-6 shadow-2xl md:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="term-dialog-title"
