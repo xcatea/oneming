@@ -76,24 +76,29 @@ function lookupWidget(lang) {
   for (let Y = LOOKUP_YEAR_FROM - 1; Y <= LOOKUP_YEAR_TO; Y++) {
     const y = yearInfo(Y)
     data.push([ymd(y.cny), Y, y.animal.id, lang === 'en' ? `${nameEn(y)} (${y.gz})` : `${y.gz} ${nameZh(y)}`, lang === 'en' ? y.animal.en : y.animal.zh,
-      y.animal.zh, ELEMENT_META[y.el].color, lang === 'en' ? y.animal.kwEn : y.animal.kwZh, y.gz, lang === 'en' ? nameEn(y) : nameZh(y)])
+      y.animal.zh, ELEMENT_META[y.el].color, lang === 'en' ? y.animal.kwEn : y.animal.kwZh, y.gz, lang === 'en' ? nameEn(y) : nameZh(y),
+      ymd(y.end), ymd(y.lichun), tHm(y.lichun), y.lichun.isBefore(y.cny) ? 'before' : 'after'])
   }
   const t = lang === 'en'
-    ? { lab: 'Enter your birth date', btn: 'Find my animal', res: 'You are a', yr: 'See your year', range: `Date checker: ${LOOKUP_YEAR_FROM}–${LOOKUP_YEAR_TO}. Detailed year guides: ${YEAR_FROM}–${YEAR_TO}.`, card: 'Make my zodiac card', save: 'Save image', me: 'I am a', foot: 'Find yours at', url: `${SITE.domain}/en/chinese-zodiac` }
-    : { lab: '输入公历生日', btn: '查生肖', res: '你属', yr: '查看这一年', range: `生肖速查：${LOOKUP_YEAR_FROM}—${LOOKUP_YEAR_TO} 年；详细年份页：${YEAR_FROM}—${YEAR_TO} 年。`, card: '生成我的生肖卡片', save: '保存图片', me: '我属', foot: '查你的生肖', url: `${SITE.domain}/shengxiao` }
+    ? { lab: 'Enter your birth date', btn: 'Find my animal', res: 'Your Chinese zodiac animal is', yr: 'See your year', range: `Date checker: ${LOOKUP_YEAR_FROM}–${LOOKUP_YEAR_TO}. Detailed year guides: ${YEAR_FROM}–${YEAR_TO}.`, card: 'Make my zodiac card', save: 'Save image', me: 'I am a', foot: 'Find yours at', url: `${SITE.domain}/en/chinese-zodiac`, dateRange: 'Zodiac year', baziNote: 'BaZi note', baziExplain: 'This date falls between Li Chun (Start of Spring) and Chinese New Year. Your popular zodiac animal follows Chinese New Year, while the BaZi year pillar may already have changed at Li Chun. Exact birth time and location matter.' }
+    : { lab: '输入公历生日', btn: '查生肖', res: '你属', yr: '查看这一年', range: `生肖速查：${LOOKUP_YEAR_FROM}—${LOOKUP_YEAR_TO} 年；详细年份页：${YEAR_FROM}—${YEAR_TO} 年。`, card: '生成我的生肖卡片', save: '保存图片', me: '我属', foot: '查你的生肖', url: `${SITE.domain}/shengxiao`, dateRange: '生肖年份', baziNote: '八字年柱提示', baziExplain: '这一天处于立春与春节之间。民俗生肖按春节换年，八字年柱通常按立春换年，因此两种口径可能不同；临界日期需要结合出生时刻和地点判断。' }
   const base = lang === 'en' ? '/en/chinese-zodiac/' : '/shengxiao/'
   const btnCss = 'padding:9px 18px;border:0;border-radius:999px;background:#4c6b5e;color:#ece5d6;font:inherit;cursor:pointer'
   return `<div class="box" id="zodiac-lookup"><div class="lab">${t.lab}</div>
 <form onsubmit="return zl(event)" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-<input type="date" id="zl-d" required min="${LOOKUP_YEAR_FROM}-01-01" max="${LOOKUP_YEAR_TO}-12-31" value="1990-06-15" style="padding:8px 10px;border:1px solid rgba(33,29,24,.2);border-radius:8px;background:rgba(255,255,255,.6);font:inherit">
+<input type="date" id="zl-d" required min="${LOOKUP_YEAR_FROM}-01-01" max="${LOOKUP_YEAR_TO}-12-31" style="padding:8px 10px;border:1px solid rgba(33,29,24,.2);border-radius:8px;background:rgba(255,255,255,.6);font:inherit">
 <button style="${btnCss}">${t.btn}</button></form>
-<p id="zl-r" style="margin:10px 0 0;font-size:17px"></p>
+<p id="zl-r" aria-live="polite" style="margin:10px 0 0;font-size:17px"></p>
 <div id="zl-card" style="display:none;margin-top:12px"><button type="button" id="zl-mk" onclick="zc()" style="${btnCss};background:#211d18">${t.card}</button>
 <div id="zl-out" style="display:none;margin-top:12px"><canvas id="zl-cv" width="1080" height="1440" style="width:100%;max-width:360px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.12);display:block"></canvas>
 <a id="zl-dl" download="zodiac-card.png" style="display:inline-block;margin-top:10px;${btnCss};text-decoration:none">${t.save}</a></div></div>
 <p class="src" style="margin:4px 0 0">${t.range}</p></div>
 <script>var ZD=${JSON.stringify(data)},ZH=null;
-function zl(e){e.preventDefault();var v=document.getElementById('zl-d').value,h=null;for(var i=0;i<ZD.length;i++){if(ZD[i][0]<=v)h=ZD[i];else break}var r=document.getElementById('zl-r');ZH=h;document.getElementById('zl-out').style.display='none';if(!h){r.textContent='';document.getElementById('zl-card').style.display='none';return false}r.innerHTML='${t.res} <strong>'+h[4]+'</strong> · '+h[3]+' · <a href="${base}'+h[2]+'/">'+h[4]+' →</a>'+(h[1]>=${YEAR_FROM}&&h[1]<=${YEAR_TO}?' · <a href="${base}'+h[1]+'/">${t.yr} '+h[1]+' →</a>':'');document.getElementById('zl-card').style.display='block';if(window.gtag)gtag('event','zodiac_lookup',{lang:'${lang}'});return false}
+function zf(v){return new Date(v+'T12:00:00').toLocaleDateString('${lang === 'en' ? 'en-US' : 'zh-CN'}',{year:'numeric',month:'short',day:'numeric'})}
+function zl(e){e.preventDefault();var v=document.getElementById('zl-d').value,h=null;for(var i=0;i<ZD.length;i++){if(ZD[i][0]<=v)h=ZD[i];else break}var r=document.getElementById('zl-r');ZH=h;document.getElementById('zl-out').style.display='none';if(!h){r.textContent='';document.getElementById('zl-card').style.display='none';return false}
+var range=zf(h[0])+' – '+zf(h[10]),note=(h[13]==='before'?(v>=h[11]&&v<h[0]):(v>=h[0]&&v<h[11]));
+r.innerHTML='${t.res} <strong>'+h[4]+'</strong> · '+h[3]+'<br><span class="src">${t.dateRange}: '+range+'</span><br><a href="${base}'+h[2]+'/">'+h[4]+' →</a>'+(h[1]>=${YEAR_FROM}&&h[1]<=${YEAR_TO}?' · <a href="${base}'+h[1]+'/">${t.yr} '+h[1]+' →</a>':'')+(note?'<p class="note"><strong>${t.baziNote}:</strong> ${t.baziExplain} (Li Chun: '+zf(h[11])+' '+h[12]+' Beijing time.)</p>':'');
+document.getElementById('zl-card').style.display='block';if(window.gtag)gtag('event','zodiac_lookup',{lang:'${lang}'});return false}
 function zc(){if(!ZH)return;var c=document.getElementById('zl-cv'),x=c.getContext('2d'),W=1080,H=1440,S='"Noto Serif SC","Songti SC","STSong","SimSun",Georgia,serif';
 x.fillStyle='#ece5d6';x.fillRect(0,0,W,H);x.fillStyle='rgba(0,0,0,.02)';x.beginPath();x.arc(W*.85,H*.12,300,0,7);x.fill();x.beginPath();x.arc(W*.1,H*.88,280,0,7);x.fill();
 x.strokeStyle='rgba(33,29,24,.14)';x.lineWidth=2;x.strokeRect(40,40,W-80,H-80);
