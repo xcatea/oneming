@@ -463,6 +463,19 @@ function TermLink({ id, onTerm, children }) {
 }
 
 function TermModal({ id, lang, t, onClose }) {
+  const closeRef = useRef(null)
+  useEffect(() => {
+    const previouslyFocused = document.activeElement
+    closeRef.current?.focus()
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (previouslyFocused instanceof HTMLElement && previouslyFocused.isConnected) previouslyFocused.focus()
+    }
+  }, [onClose])
   const term = TERM_BY_ID[id]
   if (!term) return null
   const v = (zh, en) => (lang === 'en' ? en : zh)
@@ -470,14 +483,18 @@ function TermModal({ id, lang, t, onClose }) {
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-[rgba(20,18,15,0.45)] p-0 md:items-center md:p-4"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className="w-full max-w-lg rounded-t-2xl bg-[var(--color-paper)] p-6 shadow-2xl md:rounded-2xl"
+        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-[var(--color-paper)] p-6 shadow-2xl md:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="term-dialog-title"
       >
         <div className="flex items-baseline justify-between gap-3">
-          <h3 className="font-zh text-xl font-bold">{v(term.zh, term.en)}</h3>
-          <button onClick={onClose} className="text-sm text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]">
+          <h3 id="term-dialog-title" className="font-zh text-xl font-bold">{v(term.zh, term.en)}</h3>
+          <button ref={closeRef} onClick={onClose} className="text-sm text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]">
             {t.termClose} ✕
           </button>
         </div>
