@@ -9,3 +9,14 @@ export const ZODIAC_ANIMAL_EN = Object.freeze({
 export function zodiacLabel(animal, lang = 'zh') {
   return lang === 'en' ? (ZODIAC_ANIMAL_EN[animal] || animal) : animal
 }
+
+export const WESTERN_SIGN_EN = Object.freeze({
+  白羊: 'Aries', 金牛: 'Taurus', 双子: 'Gemini', 巨蟹: 'Cancer',
+  狮子: 'Leo', 处女: 'Virgo', 天秤: 'Libra', 天蝎: 'Scorpio',
+  射手: 'Sagittarius', 摩羯: 'Capricorn', 水瓶: 'Aquarius', 双鱼: 'Pisces',
+  牡羊: 'Aries', 魔羯: 'Capricorn',
+})
+
+export function sunSignLabel(sign, lang = 'zh') {
+  return lang === 'en' ? (WESTERN_SIGN_EN[sign] || sign) : sign
+}
