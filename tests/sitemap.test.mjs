@@ -21,5 +21,5 @@ test('sitemap deduplicates URLs and escapes XML special characters', () => {
   assert.equal((xml.match(/<url>/g) || []).length, 3)
   assert.ok(xml.includes('https://oneming.net/?a=1&amp;b=2'))
   assert.ok(xml.includes('https://oneming.net/path/&lt;tag&gt;'))
-  assert.ok(xml.endsWith('</urlset>\\n'))
+  assert.ok(xml.trimEnd().endsWith('</urlset>'))
 })
