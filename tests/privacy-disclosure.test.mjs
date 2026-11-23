@@ -9,11 +9,13 @@ test('English privacy and AI notice explain the real DeepSeek data flow', () => 
   const privacy = pages.get('en/privacy/index.html')
   const aiNotice = pages.get('en/ai-notice/index.html')
   assert.ok(privacy.includes('DeepSeek'))
+  assert.ok(privacy.includes('optional and off by default'))
   assert.ok(privacy.includes('raw birth date, birth time, name and birthplace'))
   assert.ok(privacy.includes('up to 30 days'))
   assert.ok(privacy.includes('Cloudflare infrastructure'))
   assert.ok(privacy.includes('provider'))
   assert.ok(aiNotice.includes('DeepSeek'))
+  assert.ok(aiNotice.includes('optional and off by default'))
   assert.ok(aiNotice.includes('/en/privacy/'))
 })
 
@@ -35,6 +37,8 @@ test('Chinese privacy and AI notice source describes derived facts and caching',
   const source = await readFile(new URL('../scripts/gen-static.mjs', import.meta.url), 'utf8')
   assert.ok(source.includes('DeepSeek'))
   assert.ok(source.includes('最多 30 天'))
+  assert.ok(source.includes('AI 辅助措辞为可选项，默认关闭'))
+  assert.ok(source.includes('AI 辅助措辞默认关闭'))
   assert.ok(source.includes('原始出生日期、出生时间、姓名和出生地不会发送给 AI 服务'))
 })
 
