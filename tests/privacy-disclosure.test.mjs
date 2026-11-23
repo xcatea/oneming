@@ -23,7 +23,11 @@ test('both calculator languages disclose AI-derived chart facts before use', () 
   assert.ok(STRINGS.zh.aiDataNote.includes('DeepSeek'))
   assert.ok(STRINGS.zh.aiDataNote.includes('原始出生日期'))
   assert.ok(STRINGS.en.privacyLink)
+  assert.ok(STRINGS.en.aiOptInLabel)
+  assert.ok(STRINGS.en.aiOptInHint)
   assert.ok(STRINGS.zh.privacyLink)
+  assert.ok(STRINGS.zh.aiOptInLabel)
+  assert.ok(STRINGS.zh.aiOptInHint)
 })
 
 test('Chinese privacy and AI notice source describes derived facts and caching', async () => {
