@@ -8,7 +8,7 @@ export const SITE = {
   // 允许调用 /api/reading 的来源（主域名 + 备用域名 + 预览环境）
   // 备用域名（如 oneming.org）请在 Cloudflare 里 301 跳转到主域名
   allowedHosts: ['oneming.net', 'www.oneming.net', 'oneming.org', 'www.oneming.org'],
-  allowPreviewHosts: true, // *.pages.dev 预览环境
+  // 预览域名通过 Cloudflare Pages 环境变量 ONEMING_PREVIEW_HOST 精确配置；不开放整个 *.pages.dev 域。
   github: 'https://github.com/xcatea/oneming',
   nameZh: '一命',
   nameEn: 'ONEMING',
