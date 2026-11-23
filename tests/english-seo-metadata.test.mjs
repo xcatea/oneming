@@ -18,8 +18,8 @@ test('every generated English page has a unique canonical, title and description
   const failures = []
   for (const [path, html] of pages) {
     if (!path.startsWith('en/')) continue
-    const expected = `https://oneming.net/${path.replace(/index\\.html$/, '')}`
-    const title = html.match(/<title>([^<]+)<\\/title>/)?.[1]
+    const expected = `https://oneming.net/${path.replace(/index\.html$/, '')}`
+    const title = html.match(/<title>([^<]+)<\/title>/)?.[1]
     const description = html.match(/<meta name="description" content="([^"]*)"/)?.[1]
     const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1]
 
