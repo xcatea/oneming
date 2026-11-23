@@ -466,6 +466,11 @@ function TermModal({ id, lang, t, onClose }) {
   const closeRef = useRef(null)
   const dialogRef = useRef(null)
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [])
+  useEffect(() => {
     const previouslyFocused = document.activeElement
     closeRef.current?.focus()
     const onKeyDown = (event) => {
