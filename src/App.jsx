@@ -342,6 +342,7 @@ function BaziForm({ t, lang, onSubmit, initial }) {
           </div>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-soft)]">{t.formHint}</p>
+        <p className="mt-2 text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.aiDataNote} <a className="underline underline-offset-2" href={lang === 'en' ? '/en/privacy/' : '/privacy/'}>{t.privacyLink}</a></p>
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
           {cal === 'solar' ? (
             <Field label={t.date}>
