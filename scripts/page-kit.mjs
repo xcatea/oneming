@@ -24,14 +24,33 @@ export const baseName = (s) => s.split('（')[0].split('(')[0].trim()
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap'
 
 // 统计脚本（所有页面，含首页 App）
+export function ga4Tags(id) {
+  if (!id) return ''
+  const safeId = esc(id)
+  return `<script async src="https://www.googletagmanager.com/gtag/js?id=${safeId}"></script>
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments)}
+gtag('js',new Date());
+(function(){
+  const cleanUrl = (value) => {
+    try { const u = new URL(value, window.location.origin); return u.origin + u.pathname }
+    catch (e) { return '' }
+  };
+  const pageLocation = cleanUrl(window.location.href);
+  const pageReferrer = document.referrer ? cleanUrl(document.referrer) : '';
+  gtag('config','${safeId}',{send_page_view:false,page_location:pageLocation,page_referrer:pageReferrer});
+  gtag('event','page_view',{page_location:pageLocation,page_referrer:pageReferrer,page_title:document.title});
+})();
+</script>\n`
+}
+
 export function analyticsTags() {
   let out = ''
   if (CFG.cfBeaconToken) {
     out += `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='${JSON.stringify({ token: CFG.cfBeaconToken })}'></script>\n`
   }
-  if (CFG.ga4Id) {
-    out += `<script async src="https://www.googletagmanager.com/gtag/js?id=${esc(CFG.ga4Id)}"></script>\n<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${esc(CFG.ga4Id)}');</script>\n`
-  }
+  out += ga4Tags(CFG.ga4Id)
   return out
 }
 
