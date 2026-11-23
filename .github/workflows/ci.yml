@@ -3,8 +3,6 @@ on:
   push:
     branches: [main]
   pull_request:
-permissions:
-  contents: write
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
@@ -14,35 +12,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Generate patched lockfile candidate
-        run: npm audit fix --package-lock-only --ignore-scripts || true
       - run: npm ci
-      - name: Report npm audit findings
-        run: |
-          npm audit --json > npm-audit.json || true
-          node --input-type=module -e "import fs from 'node:fs'; const a = JSON.parse(fs.readFileSync('npm-audit.json', 'utf8')); console.log('AUDIT SUMMARY', JSON.stringify(a.metadata?.vulnerabilities || {})); for (const [name, v] of Object.entries(a.vulnerabilities || {})) console.log('AUDIT PACKAGE', name, JSON.stringify({severity:v.severity, direct:v.isDirect, range:v.range, fixAvailable:v.fixAvailable, via:v.via}));"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: patched-package-lock
-          path: package-lock.json
-          if-no-files-found: error
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
       - run: npm test
       - run: npm run build
-      - name: Commit patched lockfile to this PR branch
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          PR_BRANCH: ${{ github.head_ref }}
-        run: |
-          cp package-lock.json /tmp/oneming-package-lock.json
-          git fetch origin "$PR_BRANCH"
-          git checkout -B "$PR_BRANCH" "origin/$PR_BRANCH"
-          cp /tmp/oneming-package-lock.json package-lock.json
-          git add package-lock.json
-          if git diff --cached --quiet; then
-            echo "Lockfile already current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "fix: update vulnerable npm dependency tree"
-          git push origin "$PR_BRANCH"
