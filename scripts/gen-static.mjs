@@ -43,7 +43,7 @@ const LEGAL = [
 <h2 class="sec">分享由你决定</h2>
 <p>"保存/分享命盘"生成的链接会把出生日期、时间、性别，以及你选择时的出生地代码和夏令时选项放入 URL 查询参数。复制链接只发生在浏览器；当你或收件人打开链接时，这些参数会随页面请求发送到一命的托管/CDN 基础设施，并可能出现在浏览器历史或基础设施请求日志中。链接不包含姓名。任何拿到链接的人都可以还原命盘；如果不愿披露这些信息，请勿公开发布链接。命盘卡片默认为不含完整四柱的"氛围卡"，含完整四柱的"完整卡"需要你主动选择。</p>
 <h2 class="sec">统计、Cookie 与广告</h2>
-<p>本站托管于 Cloudflare，可能产生匿名的聚合访问统计（如访问量），不涉及你的出生信息。${CFG.ga4Id ? '我们使用 Google Analytics 统计页面访问和按钮点击（只记录事件名称，不记录出生日期或时间），它会使用 Cookie。' : ''}${CFG.adsenseClient ? '部分知识页面展示 Google AdSense 广告。Google 等第三方供应商会使用 Cookie，根据你过去访问本站或其他网站的情况投放广告；你可以在 <a href="https://adssettings.google.com">Google 广告设置</a>中关闭个性化广告。排盘工具页面不展示广告。' : ''}</p>`,
+<p>本站托管于 Cloudflare，可能产生匿名的聚合访问统计（如访问量），不涉及你的出生信息。${CFG.ga4Id ? '如启用 Google Analytics 4，我们会统计页面访问和按钮点击。发送前会把页面地址和来源地址处理为“域名 + 路径”，剔除所有查询参数，因此分享链接中的出生信息不会发送给 GA4。GA4 会使用 Cookie。' : ''}${CFG.adsenseClient ? '部分知识页面展示 Google AdSense 广告。Google 等第三方供应商会使用 Cookie，根据你过去访问本站或其他网站的情况投放广告；你可以在 <a href="https://adssettings.google.com">Google 广告设置</a>中关闭个性化广告。排盘工具页面不展示广告。' : ''}</p>`,
   },
   {
     id: 'ai-notice', title: 'AI 生成说明', desc: '一命 ONEMING AI 生成说明：哪些内容由 AI 辅助生成，以及我们的约束方式。',
