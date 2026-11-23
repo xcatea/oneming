@@ -235,7 +235,7 @@ function homeStatic(lang) {
     return `<main style="max-width:720px;margin:0 auto;padding:40px 20px;font-family:Georgia,serif;color:#211d18">
 <h1>Free BaZi Calculator — Four Pillars chart with every term explained</h1>
 <p>Enter your birth date and time to get your Four Pillars of Destiny (BaZi), Five Elements balance and Ten Gods — plus plain-English explanations of every term. Calculated in your browser. No predictions, no fate-changing.</p>
-<p><a href="/en/term/">BaZi glossary</a> · <a href="/en/chinese-zodiac/">Chinese zodiac by year</a> · <a href="/en/2027-year-of-the-fire-goat/">2027 Year of the Fire Goat</a> · <a href="/en/five-element-colors/">Five Element colors</a> · <a href="/">中文版</a></p>
+<p><a href="/en/term/">BaZi glossary</a> · <a href="/en/bazi-for-beginners/">BaZi for beginners</a> · <a href="/en/chinese-zodiac/">Chinese zodiac by year</a> · <a href="/en/2027-year-of-the-fire-goat/">2027 Year of the Fire Goat</a> · <a href="/en/five-element-colors/">Five Element colors</a> · <a href="/">中文版</a></p>
 </main>`
   }
   return `<main style="max-width:720px;margin:0 auto;padding:40px 20px;font-family:serif;color:#211d18">
