@@ -5,7 +5,7 @@
 //     外部无法注入任何自由文本，本接口不能被当成通用 LLM 盗用。
 //  3. 无状态：不接触出生日期，不存储、不日志化。
 //  4. 同一张盘的结果走 Cloudflare Cache API 缓存（盘面组合有限，命中率高，几乎不重复花钱）。
-//  5. 可选限流：绑定 KV（变量名 RATE_KV）后按 IP 每分钟限次；不绑定则跳过。
+//  5. 强制限流：必须绑定 RATE_KV，按 IP 每分钟限次；未配置或 KV 故障时不调用付费模型。
 //  6. 反啰嗦 + 合规：硬字数上限 + max_tokens 截断 + 服务端合规过滤。
 
 import { analyzeChart } from '../../src/analyze.js'
@@ -100,16 +100,21 @@ export function allowOrigin(request, env = {}) {
   return host === 'localhost' || host === '127.0.0.1'
 }
 
-async function rateLimited(request, env) {
-  if (!env.RATE_KV) return false
+export async function rateLimitStatus(request, env = {}) {
+  // Fail closed: never call the paid model without a working per-IP limiter.
+  if (!env.RATE_KV) return 'unavailable'
   try {
     const ip = request.headers.get('cf-connecting-ip') || 'unknown'
     const key = `rl:${ip}:${Math.floor(Date.now() / 60000)}`
-    const n = parseInt((await env.RATE_KV.get(key)) || '0', 10)
-    if (n >= RATE_LIMIT_PER_MIN) return true
-    await env.RATE_KV.put(key, String(n + 1), { expirationTtl: 120 })
-  } catch (e) { /* KV 异常时不拦截 */ }
-  return false
+    const raw = await env.RATE_KV.get(key)
+    const parsed = Number.parseInt(raw || '0', 10)
+    const count = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
+    if (count >= RATE_LIMIT_PER_MIN) return 'limited'
+    await env.RATE_KV.put(key, String(count + 1), { expirationTtl: 120 })
+    return 'ok'
+  } catch (e) {
+    return 'unavailable'
+  }
 }
 
 function cacheRequest(pillars, lang, mode) {
@@ -136,8 +141,10 @@ export async function onRequestPost(context) {
       if (hit) return json({ text: (await hit.json()).text, cached: true }, 200)
     }
 
-    // 2) 再限流（命中缓存的请求不计次）
-    if (await rateLimited(request, env)) return json({ error: 'rate_limited' }, 429)
+    // 2) 再限流（命中缓存的请求不计次）。没有可用 KV 时 fail closed，避免付费模型被无限调用。
+    const rateStatus = await rateLimitStatus(request, env)
+    if (rateStatus === 'unavailable') return json({ error: 'rate_limit_unavailable' }, 503)
+    if (rateStatus === 'limited') return json({ error: 'rate_limited' }, 429)
     if (!env.DEEPSEEK_API_KEY) return json({ error: 'no_key' }, 500)
 
     const facts = buildFacts(pillars, lang)
