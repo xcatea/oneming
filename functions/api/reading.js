@@ -97,7 +97,8 @@ export function allowOrigin(request, env = {}) {
   // Never trust every *.pages.dev project. Allow only one explicitly configured preview hostname.
   const previewHost = String(env.ONEMING_PREVIEW_HOST || '').trim().toLowerCase()
   if (previewHost && host === previewHost) return true
-  return host === 'localhost' || host === '127.0.0.1'
+  const allowLocal = String(env.ONEMING_ALLOW_LOCAL_ORIGINS || '').toLowerCase() === 'true'
+  return allowLocal && (host === 'localhost' || host === '127.0.0.1')
 }
 
 export async function rateLimitStatus(request, env = {}) {
