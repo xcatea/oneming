@@ -20,7 +20,7 @@ test('rate limiter increments a per-IP minute counter with a short TTL', async (
     },
   }
   assert.equal(await rateLimitStatus(request(), env), 'ok')
-  assert.match(written[0], /^rl:203\\.0\\.113\\.10:\\d+$/)
+  assert.match(written[0], /^rl:203\.0\.113\.10:\d+$/)
   assert.equal(written[1], '5')
   assert.deepEqual(written[2], { expirationTtl: 120 })
 })
