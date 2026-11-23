@@ -89,11 +89,14 @@ function hostOf(v) {
 }
 
 // 浏览器的同源 POST 一定带 Origin；没有 Origin/Referer 的一律视为脚本调用，拒绝
-function allowOrigin(request) {
-  const host = hostOf(request.headers.get('origin') || '') || hostOf(request.headers.get('referer') || '')
+export function allowOrigin(request, env = {}) {
+  const origin = request.headers.get('origin')
+  const host = hostOf(origin || request.headers.get('referer') || '')
   if (!host) return false
   if (SITE.allowedHosts.includes(host)) return true
-  if (SITE.allowPreviewHosts && host.endsWith('.pages.dev')) return true
+  // Never trust every *.pages.dev project. Allow only one explicitly configured preview hostname.
+  const previewHost = String(env.ONEMING_PREVIEW_HOST || '').trim().toLowerCase()
+  if (previewHost && host === previewHost) return true
   return host === 'localhost' || host === '127.0.0.1'
 }
 
@@ -117,7 +120,7 @@ function cacheRequest(pillars, lang, mode) {
 export async function onRequestPost(context) {
   const { request, env } = context
   try {
-    if (!allowOrigin(request)) return json({ error: 'forbidden' }, 403)
+    if (!allowOrigin(request, env)) return json({ error: 'forbidden' }, 403)
 
     const body = await request.json().catch(() => null)
     if (!body || !isValidPillars(body.pillars)) return json({ error: 'bad_pillars' }, 400)
