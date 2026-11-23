@@ -18,7 +18,7 @@ test('generated English growth pages do not link to missing English static pages
     if (!source.startsWith('en/')) continue
     const hrefs = [...html.matchAll(/href="(\/en\/[^"#?]*)"/g)].map((match) => match[1])
     for (const href of hrefs) {
-      if (href === '/en/') continue
+      if (href === '/en/' || href.includes("'+h[")) continue // runtime date-checker links are assembled from user input
       const target = href.replace(/^\//, '').replace(/\/$/, '') + '/index.html'
       if (!pages.has(target)) missing.push({ source, href, target })
     }
