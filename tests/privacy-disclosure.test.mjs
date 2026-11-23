@@ -9,11 +9,13 @@ test('English privacy and AI notice explain the real DeepSeek data flow', () => 
   const privacy = pages.get('en/privacy/index.html')
   const aiNotice = pages.get('en/ai-notice/index.html')
   assert.ok(privacy.includes('DeepSeek'))
+  assert.ok(privacy.includes('optional and off by default'))
   assert.ok(privacy.includes('raw birth date, birth time, name and birthplace'))
   assert.ok(privacy.includes('up to 30 days'))
   assert.ok(privacy.includes('Cloudflare infrastructure'))
   assert.ok(privacy.includes('provider'))
   assert.ok(aiNotice.includes('DeepSeek'))
+  assert.ok(aiNotice.includes('optional and off by default'))
   assert.ok(aiNotice.includes('/en/privacy/'))
 })
 
