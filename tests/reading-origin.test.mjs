@@ -32,7 +32,10 @@ test('an untrusted Origin cannot fall back to a trusted Referer', () => {
   assert.equal(allowOrigin(requestWith('https://attacker.pages.dev', 'https://oneming.net')), false)
 })
 
-test('local development origins remain available', () => {
-  assert.equal(allowOrigin(requestWith('http://localhost:5173')), true)
-  assert.equal(allowOrigin(requestWith('http://127.0.0.1:8788')), true)
+test('local development origins are disabled by default and require explicit opt-in', () => {
+  assert.equal(allowOrigin(requestWith('http://localhost:5173')), false)
+  assert.equal(allowOrigin(requestWith('http://127.0.0.1:8788')), false)
+  const env = { ONEMING_ALLOW_LOCAL_ORIGINS: 'true' }
+  assert.equal(allowOrigin(requestWith('http://localhost:5173'), env), true)
+  assert.equal(allowOrigin(requestWith('http://127.0.0.1:8788'), env), true)
 })
