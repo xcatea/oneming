@@ -9,6 +9,6 @@ const escapeXml = (value) => String(value)
 
 export function buildSitemap(urls) {
   const unique = [...new Set(urls.filter((url) => typeof url === 'string' && url.trim()))]
-  const body = unique.map((url) => `  <url><loc>${escapeXml(url)}</loc></url>`).join('\\n')
-  return `<?xml version="1.0" encoding="UTF-8"?>\\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\\n${body}\\n</urlset>\\n`
+  const body = unique.map((url) => `  <url><loc>${escapeXml(url)}</loc></url>`).join('\n')
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
 }
