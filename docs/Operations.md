@@ -14,7 +14,10 @@
 ### 3. 给接口加限流（防止 DeepSeek 额度被刷）
 - Cloudflare 后台 → Workers & Pages → KV → 新建命名空间，比如 `oneming-rate`
 - oneming 项目 → Settings → Functions → **KV namespace bindings** → 变量名填 `RATE_KV`，选刚建的命名空间
-- 不绑也能跑（只是没有按 IP 限流）；同一张盘的结果已经走 Cache API 缓存，重复请求不再花钱
+- 若要让某个预览部署使用 AI，再在 Pages → Settings → Variables and Secrets 中设置 `ONEMING_PREVIEW_HOST`，值只填该预览的完整主机名（例如 `project-name.pages.dev`），不要带 `https://` 或路径；不设置时预览环境默认使用本地文案。
+- **必须绑定**：当前 API 采用 fail-closed 策略。未绑定或 KV 故障时，未命中缓存的 AI 请求返回 503，前端继续显示本地确定性文案，不会调用 DeepSeek。
+- 代码限流阈值为每 IP 每分钟 20 次，KV 临时计数 TTL 120 秒；Cloudflare KV 是分布式近似计数，并发下不是严格原子配额。
+- 同一张盘、语言和解读模式的结果先查 Cache API；缓存命中不会调用 DeepSeek，也不消耗限流计数。
 
 ### 4. oneming.org 跳转到 oneming.net
 - 把 oneming.org 也加到 Cloudflare

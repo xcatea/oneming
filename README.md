@@ -15,7 +15,7 @@
 ## 技术架构
 
 - **前端**：Vite + React + Tailwind CSS v4，排盘计算基于 [lunar-javascript](https://github.com/6tail/lunar-javascript)，全部在浏览器本地完成
-- **AI 文笔层**：命盘解读的文字表达由 DeepSeek 通过 Cloudflare Pages Function（`functions/api/reading.js`）代理生成；服务端构建受约束提示词，只允许改写引擎给定的盘面事实，禁止预测与改运措辞，输出经合规过滤，失败回退为确定性文案。请求无状态，不存储出生信息
+- **AI 文笔层（可选，默认关闭）**：用户主动勾选后，浏览器只向 Cloudflare Pages Function 发送四柱干支；服务端重新计算摘要事实，再将衍生事实发送给 DeepSeek。原始出生日期、时间、姓名和出生地不发送给 AI 提供方。结果可按命盘/语言/模式在 Cloudflare Cache API 缓存 30 天，并缓存在浏览器本地。必须绑定 `RATE_KV` 才允许未命中缓存的模型调用；限流不可用时回退到本地文案。
 - **SEO 静态层**：构建时由 `scripts/gen-static.mjs` 生成词典页（`/term/*`）、专题页、信任页、404 与 sitemap
 - **部署**：Cloudflare Pages，`npm run build` = `vite build && node scripts/gen-static.mjs`
 
