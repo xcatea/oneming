@@ -806,12 +806,13 @@ function CardModal({ chart, analysis, reading, lang, t, onClose }) {
 function Reading({ data, t, lang, onTerm }) {
   const analysis = useMemo(() => analyzeChart(data, lang), [data, lang])
   const [reading, setReading] = useState(() => fallbackProse(analysis, lang))
+  const [aiEnabled, setAiEnabled] = useState(false)
   useEffect(() => {
     let alive = true
     setReading(fallbackProse(analysis, lang))
-    generateReading(analysis, data, lang, callModel).then((r) => { if (alive) setReading(r.text) })
+    generateReading(analysis, data, lang, aiEnabled ? callModel : null).then((r) => { if (alive) setReading(r.text) })
     return () => { alive = false }
-  }, [analysis, data, lang])
+  }, [analysis, data, lang, aiEnabled])
 
   const elName = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
   const [cardOpen, setCardOpen] = useState(false)
@@ -892,6 +893,19 @@ function Reading({ data, t, lang, onTerm }) {
       </div>
 
       <p className="mt-2 text-xs leading-relaxed text-[var(--color-ink-soft)]">{analysis.strength.reason}</p>
+
+      <div className="mt-4 rounded-lg border border-[rgba(33,29,24,0.12)] px-3.5 py-3">
+        <label className="flex cursor-pointer items-start gap-2.5 text-sm font-medium">
+          <input
+            type="checkbox"
+            checked={aiEnabled}
+            onChange={(event) => setAiEnabled(event.target.checked)}
+            className="mt-0.5 accent-[var(--color-jade)]"
+          />
+          <span>{t.aiOptInLabel}</span>
+        </label>
+        <p className="mt-1 pl-6 text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.aiOptInHint}</p>
+      </div>
 
       <div className="mt-4 space-y-3 text-[15px] leading-relaxed">
         {reading.split('\n\n').map((para, i) => <p key={i}>{para}</p>)}
