@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { buildGrowth } from '../scripts/gen-growth.mjs'
 import { STRINGS } from '../src/strings.js'
+import { ga4Tags } from '../scripts/page-kit.mjs'
 
 test('English privacy and AI notice explain the real DeepSeek data flow', () => {
   const pages = new Map()
@@ -66,4 +67,26 @@ test('English privacy page explains share-link URL parameters and request exposu
   assert.ok(privacy.includes('hosting/CDN infrastructure'))
   assert.ok(privacy.includes('browser history'))
   assert.ok(privacy.includes('does not include your name'))
+})
+
+test('GA4 page views strip query parameters from both location and referrer', () => {
+  const tags = ga4Tags('G-TEST123')
+  assert.ok(tags.includes('send_page_view:false'))
+  assert.ok(tags.includes('u.origin + u.pathname'))
+  assert.ok(tags.includes('page_location:pageLocation'))
+  assert.ok(tags.includes('page_referrer:pageReferrer'))
+  assert.ok(!tags.includes("gtag('config','G-TEST123');"))
+  const scriptStart = tags.indexOf('<script>')
+  const inline = tags.slice(scriptStart + 8, tags.indexOf('</script>', scriptStart))
+  assert.ok(inline)
+  assert.doesNotThrow(() => new Function(inline))
+  assert.equal(ga4Tags(''), '')
+})
+
+test('privacy notices disclose GA4 query-string stripping', () => {
+  const pages = new Map()
+  buildGrowth({ write: (path, html) => pages.set(path, html), ALL: [] })
+  const privacy = pages.get('en/privacy/index.html')
+  assert.ok(privacy.includes('query strings are removed'))
+  assert.ok(privacy.includes('not sent to GA4'))
 })
