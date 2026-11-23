@@ -76,7 +76,7 @@ test('GA4 page views strip query parameters from both location and referrer', ()
   assert.ok(tags.includes('page_location:pageLocation'))
   assert.ok(tags.includes('page_referrer:pageReferrer'))
   assert.ok(!tags.includes("gtag('config','G-TEST123');"))
-  const inline = tags.match(/<script>([\\s\\S]*?)<\\/script>/)?.[1]
+  const inline = tags.slice(tags.indexOf('<script>') + 8, tags.indexOf('</script>'))
   assert.ok(inline)
   assert.doesNotThrow(() => new Function(inline))
   assert.equal(ga4Tags(''), '')
