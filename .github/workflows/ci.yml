@@ -13,5 +13,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Report npm audit findings
+        run: |
+          npm audit --json > npm-audit.json || true
+          node --input-type=module -e "import fs from 'node:fs'; const a = JSON.parse(fs.readFileSync('npm-audit.json', 'utf8')); console.log('AUDIT SUMMARY', JSON.stringify(a.metadata?.vulnerabilities || {})); for (const [name, v] of Object.entries(a.vulnerabilities || {})) console.log('AUDIT PACKAGE', name, JSON.stringify({severity:v.severity, direct:v.isDirect, range:v.range, fixAvailable:v.fixAvailable, via:v.via}));"
       - run: npm test
       - run: npm run build
