@@ -806,11 +806,18 @@ function CardModal({ chart, analysis, reading, lang, t, onClose }) {
 function Reading({ data, t, lang, onTerm }) {
   const analysis = useMemo(() => analyzeChart(data, lang), [data, lang])
   const [reading, setReading] = useState(() => fallbackProse(analysis, lang))
+  const [readingSource, setReadingSource] = useState('fallback')
   const [aiEnabled, setAiEnabled] = useState(false)
   useEffect(() => {
     let alive = true
     setReading(fallbackProse(analysis, lang))
-    generateReading(analysis, data, lang, aiEnabled ? callModel : null).then((r) => { if (alive) setReading(r.text) })
+    setReadingSource('fallback')
+    generateReading(analysis, data, lang, aiEnabled ? callModel : null).then((r) => {
+      if (alive) {
+        setReading(r.text)
+        setReadingSource(r.source)
+      }
+    })
     return () => { alive = false }
   }, [analysis, data, lang, aiEnabled])
 
@@ -907,6 +914,9 @@ function Reading({ data, t, lang, onTerm }) {
         <p className="mt-1 pl-6 text-xs leading-relaxed text-[var(--color-ink-soft)]">{t.aiOptInHint}</p>
       </div>
 
+      <p className="mt-3 text-xs text-[var(--color-ink-soft)]" role="status" aria-live="polite">
+        {readingSource === 'ai' ? t.readingSourceAI : aiEnabled ? t.readingSourceFallback : t.readingSourceLocal}
+      </p>
       <div className="mt-4 space-y-3 text-[15px] leading-relaxed">
         {reading.split('\n\n').map((para, i) => <p key={i}>{para}</p>)}
       </div>
