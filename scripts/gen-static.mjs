@@ -7,6 +7,7 @@ import { SHISHEN, RIZHU } from './seo-data.mjs'
 import { LONGFORM, GUIDES } from './seo-content.mjs'
 import { BASE, CFG, esc, baseName, head, foot, articleLd, breadcrumbLd, analyticsTags } from './page-kit.mjs'
 import { buildGrowth, LEGAL_EN } from './gen-growth.mjs'
+import { buildSitemap } from './sitemap.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
@@ -273,11 +274,6 @@ function injectHome() {
   write('en/index.html', en)
 }
 
-function sitemap(urls) {
-  const today = new Date().toISOString().slice(0, 10)
-  const body = urls.map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join('\n')
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`
-}
 
 for (const t of ALL) write(`term/${t.id}/index.html`, termPage(t))
 for (const g of GUIDES) write(`${g.path.replace(/^\//, '')}index.html`, guidePage(g))
@@ -302,5 +298,5 @@ const urls = [
   ...LEGAL_EN.map((p) => `${BASE}/en/${p.id}/`),
   ...growth.urls,
 ]
-write('sitemap.xml', sitemap([...new Set(urls)]))
+write('sitemap.xml', buildSitemap(urls))
 console.log(`[gen-static] 词条 ${ALL.length} + 指南 ${GUIDES.length} + 信任页 ${LEGAL.length}×2 + 增长页 ${growth.urls.length}，sitemap 共 ${new Set(urls).size} 条`)
