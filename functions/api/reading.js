@@ -45,7 +45,7 @@ ${concise ? '- 长度：最多 120 字、最多 3 句。要短、要狠、要准
 宁可短，不可注水。`
 }
 
-function userPrompt(f, lang) {
+export function userPrompt(f, lang) {
   if (lang === 'en') {
     return `[CHART FACTS]
 - Day Master: ${f.dayGan} (${f.dayElement})
@@ -65,7 +65,7 @@ Write the reading now.`
 }
 
 // 服务端用确定性引擎自己算事实（不信任客户端传来的任何文字）
-function buildFacts(pillars, lang) {
+export function buildFacts(pillars, lang) {
   const chart = chartFromPillars(pillars)
   const a = analyzeChart(chart, lang)
   const el = (e) => ELEMENT_META[e][lang === 'en' ? 'en' : 'zh']
