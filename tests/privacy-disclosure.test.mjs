@@ -37,3 +37,11 @@ test('Chinese privacy and AI notice source describes derived facts and caching',
   assert.ok(source.includes('最多 30 天'))
   assert.ok(source.includes('原始出生日期、出生时间、姓名和出生地不会发送给 AI 服务'))
 })
+
+test('third-party AI reading is off by default and called only after opt-in', async () => {
+  const { readFile } = await import('node:fs/promises')
+  const source = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  assert.ok(source.includes('const [aiEnabled, setAiEnabled] = useState(false)'))
+  assert.ok(source.includes('aiEnabled ? callModel : null'))
+  assert.ok(source.includes('checked={aiEnabled}'))
+})
