@@ -8,6 +8,7 @@ import { LONGFORM, GUIDES } from './seo-content.mjs'
 import { BASE, CFG, esc, baseName, head, foot, articleLd, breadcrumbLd, analyticsTags } from './page-kit.mjs'
 import { buildGrowth, LEGAL_EN } from './gen-growth.mjs'
 import { buildSitemap } from './sitemap.mjs'
+import { buildInfo } from './build-info.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
@@ -300,4 +301,6 @@ const urls = [
   ...growth.urls,
 ]
 write('sitemap.xml', buildSitemap(urls))
+// Build provenance is not SEO page content; do not include it in the sitemap.
+write('build-info.json', JSON.stringify(buildInfo(process.env), null, 2) + '\n')
 console.log(`[gen-static] 词条 ${ALL.length} + 指南 ${GUIDES.length} + 信任页 ${LEGAL.length}×2 + 增长页 ${growth.urls.length}，sitemap 共 ${new Set(urls).size} 条`)
