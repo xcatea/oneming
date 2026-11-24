@@ -64,3 +64,14 @@
 - 付费产品的定位（建议：排盘和解读永远免费，付费只卖"更深的学习内容"，不卖预测）
 - 手串是自己做品牌，还是先挂别人的联盟链接试水
 - 要不要做国内备案（做国内流量需要，但算命类内容在国内有监管风险，建议先做海外）
+
+## 四、核对 Cloudflare 是否已部署最新代码
+
+每次执行 `npm run build` 都会生成公开的 `/build-info.json`，仅包含项目名、Cloudflare Pages 当前构建提交 SHA 和构建时间；不输出 API Key 或其他环境变量。Cloudflare Pages 在 Git 集成构建时会自动注入 `CF_PAGES_COMMIT_SHA`，不需要手动设置。普通本地构建如果没有提交信息，`commit` 会是 `null`。
+
+1. 打开 `https://oneming.net/build-info.json`。
+2. 将 `commit` 与 GitHub main 分支最新提交的完整 SHA 比较；一致才说明该域名已经提供对应提交的构建产物。
+3. 如果不一致，到 Cloudflare → Workers & Pages → ONEMING → Deployments 查看生产构建状态、绑定分支和域名；先排除正在构建或缓存延迟，再查日志。
+4. `builtAt` 只是构建时间，不是文章更新时间，不能用于 Sitemap 的 `lastmod`。
+
+该文件只验证公开静态产物版本，不能证明 KV / DeepSeek API Key 等运行时绑定已正确配置。运行时配置仍需在 Cloudflare 后台单独确认。
