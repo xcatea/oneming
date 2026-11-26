@@ -80,3 +80,15 @@ test('date-checker result notes describe Li Chun as a convention in both languag
   assert.ok(en.includes('their BaZi year pillar may already have changed'))
   assert.ok(en.includes('Whether a Li Chun-based BaZi year pillar has changed'))
 })
+
+test('English animal and year pages describe Li Chun as a school-specific convention', () => {
+  const pages = generatedPages()
+  for (const animal of ['rat','ox','tiger','rabbit','dragon','snake','horse','goat','monkey','rooster','dog','pig']) {
+    const html = pages.get('en/chinese-zodiac/' + animal + '/index.html')
+    assert.ok(html.includes('Some BaZi schools and practitioners use Li Chun (Start of Spring) as the year-pillar boundary'), animal)
+    assert.ok(!html.includes('BaZi year pillars commonly use Li Chun'), animal)
+  }
+  const year1975 = pages.get('en/chinese-zodiac/1975/index.html')
+  assert.ok(year1975.includes('some BaZi schools and practitioners use Li Chun as the year-pillar boundary'))
+  assert.ok(!year1975.includes('BaZi year-pillar calculations commonly use Li Chun'))
+})
