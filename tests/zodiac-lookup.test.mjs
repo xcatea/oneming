@@ -149,11 +149,11 @@ test('five highest-impression English animal pages get concise titles and an ear
   const pages = new Map()
   buildGrowth({ write: (path, html) => pages.set(path, html), ALL: [] })
   const expected = {
-    snake: ['Year of the Snake: Years, Traits & Five Elements | Chinese Zodiac', 'Explore Snake years, Chinese New Year dates, Five Element variations, traditional traits and zodiac relationships. See how a full BaZi chart reads all four pillars.'],
-    monkey: ['Year of the Monkey: Years & Compatibility | Chinese Zodiac', 'Find Monkey years, Chinese New Year dates, traditional traits, Five Element variations and zodiac relationships. Try the free BaZi calculator for all four pillars.'],
-    rabbit: ['Year of the Rabbit: Traits & Five Elements | Chinese Zodiac', 'Explore Rabbit years, exact Chinese New Year dates, Five Element variations and traditional symbolism. A full BaZi chart reads your month, day and hour pillars.'],
-    rat: ['Year of the Rat: Years, Traits & Compatibility | Chinese Zodiac', 'Find Rat years, Chinese New Year dates, traditional traits, Five Element variations and zodiac relationships. Explore all four pillars with a BaZi chart.'],
-    goat: ['Year of the Goat: Years & Five Elements | Chinese Zodiac', 'Explore Goat years, Chinese New Year dates, Five Element variations and traditional symbolism. Use a free BaZi calculator to read all four pillars.'],
+    snake: ['Year of the Snake: Years, Traits &amp; Five Elements | Chinese Zodiac', 'Explore Snake years, Chinese New Year dates, Five Element variations, traditional traits and zodiac relationships. See how a full BaZi chart reads all four pillars.'],
+    monkey: ['Year of the Monkey: Years &amp; Compatibility | Chinese Zodiac', 'Find Monkey years, Chinese New Year dates, traditional traits, Five Element variations and zodiac relationships. Try the free BaZi calculator for all four pillars.'],
+    rabbit: ['Year of the Rabbit: Traits &amp; Five Elements | Chinese Zodiac', 'Explore Rabbit years, exact Chinese New Year dates, Five Element variations and traditional symbolism. A full BaZi chart reads your month, day and hour pillars.'],
+    rat: ['Year of the Rat: Years, Traits &amp; Compatibility | Chinese Zodiac', 'Find Rat years, Chinese New Year dates, traditional traits, Five Element variations and zodiac relationships. Explore all four pillars with a BaZi chart.'],
+    goat: ['Year of the Goat: Years &amp; Five Elements | Chinese Zodiac', 'Explore Goat years, Chinese New Year dates, Five Element variations and traditional symbolism. Use a free BaZi calculator to read all four pillars.'],
   }
   for (const [animal, [title, description]] of Object.entries(expected)) {
     const html = pages.get('en/chinese-zodiac/' + animal + '/index.html')
