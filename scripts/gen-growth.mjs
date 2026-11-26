@@ -424,7 +424,7 @@ function fireGoatZh() {
 <h2 class="sec">查你的生肖，生成生肖卡片</h2>
 ${lookupWidget('zh')}
 <h2 class="sec">丁未年从哪天到哪天？</h2>
-<p>民俗按春节换年：丁未年从 ${dZh(y.cny)} 开始，到 ${dZh(y.end)}（除夕）结束。部分八字流派采用立春换年：2027年立春在 ${dZh(y.lichun)} ${tHm(y.lichun)}（北京时间），比春节早两天；官方农历干支纪年则以正月初一为岁首。所以 ${y.lichun.getMonth()}月${y.lichun.getDay()}日立春到${y.cny.getMonth()}月${y.cny.getDay() - 1}日之间出生的宝宝，民俗属马，八字年柱却已是丁未。</p>
+<p>民俗按春节换年：丁未年从 ${dZh(y.cny)} 开始，到 ${dZh(y.end)}（除夕）结束。部分八字流派采用立春换年：2027年立春在 ${dZh(y.lichun)} ${tHm(y.lichun)}（北京时间），比春节早两天；官方农历干支纪年则以正月初一为岁首。所以 ${y.lichun.getMonth()}月${y.lichun.getDay()}日立春到${y.cny.getMonth()}月${y.cny.getDay() - 1}日之间出生的宝宝，民俗生肖属马；采用立春换年口径的八字年柱已是丁未。</p>
 <p class="src">官方农历干支纪年与部分命理实践采用的立春换年口径并不相同，参阅<a href="https://www.weather.gov.hk/sc/education/astronomy-and-time/time-service/00506-what-year-is-it-today.html" rel="noopener noreferrer">香港天文台《今夕是何年？》</a>。</p>
 <h2 class="sec">"丁未"是什么意思？</h2>
 <p><strong>丁</strong>是十天干的第四位，属阴火。传统上用"灯烛之火"来比喻丁火：不像丙火那样是太阳的普照，而是温暖、细致、照亮近处的光。</p>
