@@ -158,7 +158,8 @@ test('five highest-impression English animal pages get concise titles and an ear
   for (const [animal, [title, description]] of Object.entries(expected)) {
     const html = pages.get('en/chinese-zodiac/' + animal + '/index.html')
     assert.ok(html, animal)
-    assert.equal(html.match(/<title>(.*?)<\\/title>/)?.[1], title)
+    const actualTitle = html.slice(html.indexOf('<title>') + 7, html.indexOf('</title>'))
+    assert.equal(actualTitle, title)
     assert.equal(html.match(/<meta name="description" content="([^"]*)"/)?.[1], description)
     const link = html.indexOf('href="/en/">free BaZi calculator</a>')
     const firstSection = html.indexOf('<h2 class="sec">The ')
