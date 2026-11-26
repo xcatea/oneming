@@ -25,7 +25,7 @@ test('1975 English zodiac page distinguishes Wood stem from Na Yin Water', () =>
 test('English year pages qualify Lichun as a convention, not a universal official rule', () => {
   const pages = generatedPages()
   for (const [path, html] of pages) {
-    if (!path.startsWith('en/chinese-zodiac/') || !path.endsWith('/index.html') || path.split('/')[2]?.length !== 4) continue
+    const year = path.split('/')[2]
     assert.ok(!html.includes('BaZi uses Lichun (Start of Spring) as the year boundary'), path)
     assert.ok(html.includes('Some BaZi schools and practitioners use Lichun'), path)
     assert.ok(html.includes('Hong Kong Observatory'), path)
@@ -34,7 +34,7 @@ test('English year pages qualify Lichun as a convention, not a universal officia
 test('Chinese year pages explain the difference between official lunar-year and Lichun conventions', () => {
   const pages = generatedPages()
   for (const [path, html] of pages) {
-    if (!path.startsWith('shengxiao/') || !path.endsWith('/index.html') || path.split('/')[1]?.length !== 4) continue
+    const year = path.split('/')[1]
     assert.ok(html.includes('部分八字流派和命理实践以立春作为年柱分界'), path)
     assert.ok(html.includes('官方农历干支纪年则以正月初一为岁首'), path)
     assert.ok(html.includes('香港天文台《今夕是何年？》'), path)
