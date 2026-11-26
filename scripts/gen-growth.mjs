@@ -265,8 +265,8 @@ function boundaryZh(y) {
   const lcTxt = `${dZh(y.lichun)} ${tHm(y.lichun)}`
   const p1 = `${y.Y}年1月1日至${dZh(y.cny.next(-1)).replace(`${y.Y}年`, '')}出生的人，按农历仍是${prev.gz}年，生肖属<a href="${hrefZh.animal(prev.animal)}">${prev.animal.zh}</a>，不属${y.animal.zh}。`
   const p2 = lcFirst
-    ? `八字排盘以立春为年的分界。${y.Y}年立春在${lcTxt}，比春节早：立春到春节前一天之间出生的人，民俗生肖还是${prev.animal.zh}，但八字年柱已经是${y.gz}。`
-    : `八字排盘以立春为年的分界。${y.Y}年立春在${lcTxt}，比春节晚：春节到立春之前出生的人，民俗生肖已经是${y.animal.zh}，但八字年柱仍是${prev.gz}。`
+    ? `部分八字流派和命理实践以立春作为年柱分界。${y.Y}年立春在${lcTxt}，比春节早：按春节划分的民俗生肖仍属${prev.animal.zh}，但采用立春换年口径的八字年柱已进入${y.gz}。官方农历干支纪年则以正月初一为岁首。`
+    : `部分八字流派和命理实践以立春作为年柱分界。${y.Y}年立春在${lcTxt}，比春节晚：按春节划分的民俗生肖已属${y.animal.zh}，但采用立春换年口径的八字年柱仍是${prev.gz}。官方农历干支纪年则以正月初一为岁首。`
   return { p1, p2 }
 }
 function boundaryEn(y) {
@@ -275,8 +275,8 @@ function boundaryEn(y) {
   const lcTxt = `${dEn(y.lichun)} at ${tHm(y.lichun)} (Beijing time)`
   const p1 = `If you were born between January 1 and ${dEn(y.cny.next(-1)).replace(`, ${y.Y}`, '')}, ${y.Y}, you belong to the previous lunar year (${prev.gz}) — your animal is the <a href="${hrefEn.animal(prev.animal)}">${prev.animal.en}</a>, not the ${y.animal.en}.`
   const p2 = lcFirst
-    ? `BaZi uses Lichun (Start of Spring) as the year boundary. In ${y.Y}, Lichun fell on ${lcTxt} — before Chinese New Year. Babies born between Lichun and New Year’s Eve are ${prev.animal.en}s by folk custom, but their BaZi year pillar is already ${y.gz}.`
-    : `BaZi uses Lichun (Start of Spring) as the year boundary. In ${y.Y}, Lichun fell on ${lcTxt} — after Chinese New Year. Babies born between New Year and Lichun are ${y.animal.en}s by folk custom, but their BaZi year pillar is still ${prev.gz}.`
+    ? `Some BaZi schools and practitioners use Lichun (Start of Spring) as the year-pillar boundary. In ${y.Y}, Lichun fell on ${lcTxt} — before Chinese New Year. Under the popular Lunar New Year zodiac convention, babies born between these dates still belong to the ${prev.animal.en}; under a Lichun-based BaZi convention, the year pillar has already changed to ${y.gz}. The official Chinese lunar-calendar Ganzhi year, as used by the Hong Kong Observatory, changes at Lunar New Year.`
+    : `Some BaZi schools and practitioners use Lichun (Start of Spring) as the year-pillar boundary. In ${y.Y}, Lichun fell on ${lcTxt} — after Chinese New Year. Under the popular Lunar New Year zodiac convention, babies born between these dates belong to the ${y.animal.en}; under a Lichun-based BaZi convention, the year pillar is still ${prev.gz}. The official Chinese lunar-calendar Ganzhi year, as used by the Hong Kong Observatory, changes at Lunar New Year.`
   return { p1, p2 }
 }
 
@@ -306,7 +306,7 @@ function yearPageZh(Y) {
 <p>按民俗，${y.gz}年从<strong>${dZh(y.cny)}</strong>（春节）开始，到<strong>${dZh(y.end)}</strong>（除夕）结束，这期间出生的人属${a.zh}。</p>
 <p>${b.p1}</p>
 <h2 class="sec">八字里的年柱：以立春为界</h2>
-<p>${b.p2}（时间为北京时间）这也是为什么同一年出生的人，用不同工具查到的"年"可能不同。</p>
+<p>${b.p2}（时间为北京时间）这也是为什么同一年出生的人，用不同工具查到的"年"可能不同。关于官方农历干支纪年与立春换年口径的区别，可参阅<a href="https://www.weather.gov.hk/sc/education/astronomy-and-time/time-service/00506-what-year-is-it-today.html" rel="noopener noreferrer">香港天文台《今夕是何年？》</a>。</p>
 <h2 class="sec">属${a.zh}的人</h2>
 <p>${a.traitZh}</p>
 <p>${ELEMENT_FLAVOR[y.el].zh}</p>
@@ -343,6 +343,7 @@ function yearPageEn(Y) {
 <ul>
 <li><a href="https://www.hko.gov.hk/en/gts/time/calendar/pdf/files/${Y}e.pdf" rel="noopener noreferrer">Hong Kong Observatory: ${Y} Gregorian–Lunar Calendar Conversion Table</a> — reference for the lunar calendar and Chinese New Year date.</li>
 <li><a href="https://www.hko.gov.hk/en/gts/time/conversion.htm" rel="noopener noreferrer">Hong Kong Observatory: Gregorian–Lunar Calendar Conversion Table</a> — explains the calendar conversion framework and its date coverage.</li>
+<li><a href="https://www.weather.gov.hk/en/education/astronomy-and-time/time-service/00506-what-year-is-it-today.html" rel="noopener noreferrer">Hong Kong Observatory: What year is it today?</a> — explains why the official lunar-calendar Ganzhi year changes at Lunar New Year while some fortune-telling practices use Lichun.</li>
 <li><a href="https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83/%E5%8D%B7%E4%B8%80" rel="noopener noreferrer">San Ming Tong Hui (三命通會), Volume 1</a> — classical reference for the Na Yin name associated with this stem-branch pair.</li>
 </ul>
 <p class="src">The Li Chun time shown on this page is calculated by the site's calendar engine and expressed in Beijing time (UTC+8). The popular zodiac animal changes at Chinese New Year; BaZi year-pillar calculations commonly use Li Chun.</p>
@@ -366,7 +367,7 @@ function yearPageEn(Y) {
 <p>In popular zodiac interpretations, Rabbit imagery is often associated with tact, alertness, gentleness and a preference for harmony. Wood is commonly used as a symbol of growth, flexibility and cultivation. Some traditional readings combine these images to describe the Wood Rabbit as cooperative, thoughtful and adaptable.</p>
 <p>These are cultural associations, not scientifically validated personality traits. A birth-year animal cannot tell you who someone is, and it cannot predict their career, finances, health or relationships. Different traditions and authors may interpret the same symbol differently.</p>
 <h2 class="sec">A note for February 1975 birthdays</h2>
-<p>The popular zodiac year changed at Chinese New Year on ${dEn(y.cny)}. BaZi uses the Lichun (Start of Spring) solar-term boundary instead, which fell on ${dEn(y.lichun)} at ${tHm(y.lichun)} Beijing time. A person born between those two boundaries may be a Tiger by the popular lunar-year zodiac while already having a Yi-Mao BaZi year pillar. For a precise chart near either boundary, birth time and location matter.</p>
+<p>The popular zodiac year changed at Chinese New Year on ${dEn(y.cny)}. Some BaZi schools and practitioners use the Lichun (Start of Spring) solar-term boundary instead, which fell on ${dEn(y.lichun)} at ${tHm(y.lichun)} Beijing time. The Hong Kong Observatory's official lunar-calendar Ganzhi year changes at Lunar New Year; the two conventions answer different questions. A person born between those two boundaries may be a Tiger by the popular lunar-year zodiac while already having a Yi-Mao BaZi year pillar. For a precise chart near either boundary, birth time and location matter.</p>
 ` : ''
   return head(title, desc, url, { lang: 'en', ads: true, alt: { zh: `${BASE}${hrefZh.year(Y)}`, en: url } }) +
     articleLd({ title, description: desc, url, lang: 'en' }) + faqLd(faqs) +
@@ -380,7 +381,7 @@ function yearPageEn(Y) {
 <p>The ${nameEn(y)} year runs from <strong>${dEn(y.cny)}</strong> (Chinese New Year) to <strong>${dEn(y.end)}</strong> (New Year’s Eve). Everyone born in that window is a ${a.en}.</p>
 <p>${b.p1}</p>
 <h2 class="sec">BaZi and the Lichun boundary</h2>
-<p>${b.p2}</p>
+<p>${b.p2} For the distinction between the official lunar-calendar Ganzhi year and Lichun-based practices, see the <a href="https://www.weather.gov.hk/en/education/astronomy-and-time/time-service/00506-what-year-is-it-today.html" rel="noopener noreferrer">Hong Kong Observatory explanation, “What year is it today?”</a>.</p>
 <h2 class="sec">${a.en} personality</h2>
 <p>${a.traitEn}</p>
 <p>${ELEMENT_FLAVOR[y.el].en}</p>
