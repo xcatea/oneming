@@ -90,7 +90,7 @@ test('twelve English animal pages explain culture, calendrical branches and trad
   for (const animal of ['rat','ox','tiger','rabbit','dragon','snake','horse','goat','monkey','rooster','dog','pig']) {
     const html = pages.get(`en/chinese-zodiac/${animal}/index.html`)
     assert.ok(html)
-    for (const phrase of ['in Chinese culture</h2>', 'Traditional zodiac relationships', 'These descriptions are folklore', 'year start on January 1', 'Six Harmony pair is the <a href="/en/chinese-zodiac/', 'Three Harmony group with <a href="/en/chinese-zodiac/', 'BaZi year pillars commonly use Li Chun']) {
+    for (const phrase of ['in Chinese culture</h2>', 'Traditional zodiac relationships', 'These descriptions are folklore', 'year start on January 1', 'Six Harmony pair is the <a href="/en/chinese-zodiac/', 'Three Harmony group with <a href="/en/chinese-zodiac/', 'Some BaZi schools and practitioners use Li Chun (Start of Spring) as the year-pillar boundary']) {
       assert.ok(html.includes(phrase), `${animal}: missing ${phrase}`)
     }
   }
@@ -143,4 +143,28 @@ test('English glossary entries link back to the BaZi beginner learning guide', (
   assert.ok(html.includes('/en/bazi-for-beginners/'))
   assert.ok(html.includes('beginner’s guide to the Four Pillars'))
   assert.ok(html.includes('HOW IT INTERACTS'))
+})
+
+test('five highest-impression English animal pages get concise titles and an early BaZi tool link', () => {
+  const pages = new Map()
+  buildGrowth({ write: (path, html) => pages.set(path, html), ALL: [] })
+  const expected = {
+    snake: ['Year of the Snake: Years, Traits & Five Elements | Chinese Zodiac', 'Explore Snake years, Chinese New Year dates, Five Element variations, traditional traits and zodiac relationships. See how a full BaZi chart reads all four pillars.'],
+    monkey: ['Year of the Monkey: Years & Compatibility | Chinese Zodiac', 'Find Monkey years, Chinese New Year dates, traditional traits, Five Element variations and zodiac relationships. Try the free BaZi calculator for all four pillars.'],
+    rabbit: ['Year of the Rabbit: Traits & Five Elements | Chinese Zodiac', 'Explore Rabbit years, exact Chinese New Year dates, Five Element variations and traditional symbolism. A full BaZi chart reads your month, day and hour pillars.'],
+    rat: ['Year of the Rat: Years, Traits & Compatibility | Chinese Zodiac', 'Find Rat years, Chinese New Year dates, traditional traits, Five Element variations and zodiac relationships. Explore all four pillars with a BaZi chart.'],
+    goat: ['Year of the Goat: Years & Five Elements | Chinese Zodiac', 'Explore Goat years, Chinese New Year dates, Five Element variations and traditional symbolism. Use a free BaZi calculator to read all four pillars.'],
+  }
+  for (const [animal, [title, description]] of Object.entries(expected)) {
+    const html = pages.get('en/chinese-zodiac/' + animal + '/index.html')
+    assert.ok(html, animal)
+    assert.equal(html.match(/<title>(.*?)<\\/title>/)?.[1], title)
+    assert.equal(html.match(/<meta name="description" content="([^"]*)"/)?.[1], description)
+    const link = html.indexOf('href="/en/">free BaZi calculator</a>')
+    const firstSection = html.indexOf('<h2 class="sec">The ')
+    assert.ok(link > 0 && link < firstSection, animal + ': contextual tool link should appear before the first content section')
+  }
+  const ox = pages.get('en/chinese-zodiac/ox/index.html')
+  assert.ok(ox)
+  assert.ok(!ox.includes('href="/en/">free BaZi calculator</a>'))
 })
