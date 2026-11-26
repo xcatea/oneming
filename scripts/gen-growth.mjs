@@ -121,7 +121,7 @@ function zodiacHubZh() {
   const title = '十二生肖年份对照表 · 生肖查询（1930—2035）与属相性格 - 一命 ONEMING'
   const desc = '十二生肖年份对照表：输入生日查属相，按春节准确换年；每个年份的干支、五行、纳音一目了然，附十二生肖性格与三合、六合、六冲关系。'
   const faqs = [
-    { q: '生肖是按春节还是立春换的？', a: '民俗上生肖按农历春节（正月初一）更换；八字排盘里的年柱则以立春为界。两者通常相差几天，生日落在春节和立春之间的人要特别留意——民俗生肖和八字年柱可能不一样。' },
+    { q: '生肖是按春节还是立春换的？', a: '民俗生肖与官方农历干支纪年按农历春节（正月初一）更换；部分八字流派和命理实践则以立春作为年柱分界。生日落在两者之间时，不同口径可能得出不同年柱。香港天文台说明了这两种口径的历史区别。' },
     { q: '1月份出生的人属什么？', a: '公历 1 月出生的人几乎都还没到春节，按民俗属上一年的生肖。例如 1990 年 1 月 15 日出生属蛇，而不是马。用上面的速查工具输入生日即可准确判断。' },
     { q: '"金马""火羊"这种说法是怎么来的？', a: '取的是当年天干的五行：甲乙为木、丙丁为火、戊己为土、庚辛为金、壬癸为水。2026 年丙午，丙属火，所以叫火马；2027 年丁未，叫火羊。' },
   ]
@@ -152,7 +152,7 @@ function zodiacHubEn() {
   const desc = 'Find your Chinese zodiac animal by birth date. The date checker covers 1900–2100 using Chinese New Year boundaries; detailed year guides cover 1930–2035, with animal, element, stem-branch and Na Yin explanations.'
   const faqs = [
     { q: 'Does the Chinese zodiac year start on January 1?', a: 'No. The zodiac animal changes at Chinese New Year, which falls between January 21 and February 20. If you were born in January or early February, you may belong to the previous year’s animal — the calculator above checks the exact date.' },
-    { q: 'Why do BaZi charts sometimes show a different year animal?', a: 'Folk custom switches animals at Chinese New Year, but BaZi (Four Pillars) uses Lichun, the "Start of Spring" solar term around February 4. Births between the two dates can have a different year pillar from their folk zodiac animal.' },
+    { q: 'Why do BaZi charts sometimes show a different year animal?', a: 'The popular zodiac and the official Chinese lunar-calendar Ganzhi year change at Chinese New Year. Some BaZi schools and practitioners use Lichun (Start of Spring, around February 4) as the year-pillar boundary instead. Births between the two dates can therefore receive different year labels under the two conventions.' },
     { q: 'What does "Fire Goat" or "Metal Horse" mean?', a: 'The element comes from the year’s Heavenly Stem: Jia/Yi are Wood, Bing/Ding Fire, Wu/Ji Earth, Geng/Xin Metal, Ren/Gui Water. 2026 is Bing-Wu (Fire Horse); 2027 is Ding-Wei (Fire Goat).' },
   ]
   const grid = ANIMALS.map((a) => {
@@ -411,7 +411,7 @@ function fireGoatZh() {
   const goats = goatYears()
   const faqs = [
     { q: '2027年是什么羊？', a: '2027年是丁未年。天干丁属阴火，所以叫"火羊"；纳音是天河水，所以也有人说"水命"。两种说法看的维度不同。' },
-    { q: '2027年1月出生属什么？', a: `2027年春节在${dZh(y.cny)}。1月1日到${y.cny.getMonth()}月${y.cny.getDay() - 1}日出生的宝宝还属${prev.animal.zh}（${prev.gz}年）。八字年柱则以立春（${y.lichun.getMonth()}月${y.lichun.getDay()}日 ${tHm(y.lichun)}）为界。` },
+    { q: '2027年1月出生属什么？', a: `2027年春节在${dZh(y.cny)}。1月1日到${y.cny.getMonth()}月${y.cny.getDay() - 1}日出生的宝宝还属${prev.animal.zh}（${prev.gz}年）。部分八字流派以立春（${y.lichun.getMonth()}月${y.lichun.getDay()}日 ${tHm(y.lichun)}）作为年柱分界；官方农历干支纪年以正月初一为岁首。` },
     { q: '2027年是谁的本命年？', a: `属羊的人：${goats.slice(-6).map((g) => g.Y).join('、')}年出生的人，2027年都是本命年。` },
     { q: '本命年要注意什么？', a: '民俗上本命年有穿红衣、系红绳的习惯，图个喜庆，是一种文化仪式感。它不代表这一年会怎样，开心过就好；也不必为此花钱买所谓"化解"的东西。' },
   ]
@@ -424,7 +424,8 @@ function fireGoatZh() {
 <h2 class="sec">查你的生肖，生成生肖卡片</h2>
 ${lookupWidget('zh')}
 <h2 class="sec">丁未年从哪天到哪天？</h2>
-<p>民俗按春节换年：丁未年从 ${dZh(y.cny)} 开始，到 ${dZh(y.end)}（除夕）结束。八字排盘按立春换年：2027年立春在 ${dZh(y.lichun)} ${tHm(y.lichun)}（北京时间），比春节早两天。所以 ${y.lichun.getMonth()}月${y.lichun.getDay()}日立春到${y.cny.getMonth()}月${y.cny.getDay() - 1}日之间出生的宝宝，民俗属马，八字年柱却已是丁未。</p>
+<p>民俗按春节换年：丁未年从 ${dZh(y.cny)} 开始，到 ${dZh(y.end)}（除夕）结束。部分八字流派采用立春换年：2027年立春在 ${dZh(y.lichun)} ${tHm(y.lichun)}（北京时间），比春节早两天；官方农历干支纪年则以正月初一为岁首。所以 ${y.lichun.getMonth()}月${y.lichun.getDay()}日立春到${y.cny.getMonth()}月${y.cny.getDay() - 1}日之间出生的宝宝，民俗生肖属马；采用立春换年口径的八字年柱已是丁未。</p>
+<p class="src">官方农历干支纪年与部分命理实践采用的立春换年口径并不相同，参阅<a href="https://www.weather.gov.hk/sc/education/astronomy-and-time/time-service/00506-what-year-is-it-today.html" rel="noopener noreferrer">香港天文台《今夕是何年？》</a>。</p>
 <h2 class="sec">"丁未"是什么意思？</h2>
 <p><strong>丁</strong>是十天干的第四位，属阴火。传统上用"灯烛之火"来比喻丁火：不像丙火那样是太阳的普照，而是温暖、细致、照亮近处的光。</p>
 <p><strong>未</strong>是十二地支的第八位，五行属土，对应夏末（小暑到立秋），是收获之前万物将熟的时段，生肖为羊。</p>
@@ -452,7 +453,7 @@ function fireGoatEn() {
   const faqs = [
     { q: 'When is Chinese New Year 2027?', a: `Chinese New Year 2027 is on ${dEn(y.cny)}. The Fire Goat year lasts until ${dEn(y.end)}.` },
     { q: 'Why is 2027 a Fire Goat year?', a: 'Its stem-branch is Ding-Wei (丁未). Ding is Yin Fire; Wei is the Goat branch. The element in the name always comes from the Heavenly Stem.' },
-    { q: 'Is a baby born in January 2027 a Goat?', a: `No. Babies born before ${dEn(y.cny)} are still Horses (${prev.gz}, Fire Horse). In BaZi, the year pillar switches at Lichun — ${dEn(y.lichun)} at ${tHm(y.lichun)} Beijing time.` },
+    { q: 'Is a baby born in January 2027 a Goat?', a: `No. Babies born before ${dEn(y.cny)} are still Horses (${prev.gz}, Fire Horse). Some BaZi schools and practitioners use Lichun as the year-pillar boundary — ${dEn(y.lichun)} at ${tHm(y.lichun)} Beijing time.` },
     { q: 'What is a "ben ming nian"?', a: `Your ben ming nian (本命年) is a year matching your own animal — in 2027, everyone born in ${goats.slice(-5).map((g) => g.Y).join(', ')}. Folk custom is to wear something red for the festive spirit; it’s a cultural ritual, not a prediction, and there’s no need to buy anything to "fix" it.` },
   ]
   return head(title, desc, url, { lang: 'en', ads: true, alt: { zh: `${BASE}/2027-huoyang/`, en: url } }) + articleLd({ title, description: desc, url, lang: 'en', updatedAt: '2026-10-30' }) + faqLd(faqs) + `
@@ -464,7 +465,8 @@ function fireGoatEn() {
 <h2 class="sec">Find your animal &amp; make a zodiac card</h2>
 ${lookupWidget('en')}
 <h2 class="sec">When does the Year of the Goat start?</h2>
-<p>By folk custom the Goat year runs from ${dEn(y.cny)} to ${dEn(y.end)}. BaZi astrology switches years at Lichun, the Start of Spring — in 2027 that’s ${dEn(y.lichun)} at ${tHm(y.lichun)} Beijing time, two days <em>before</em> New Year. A baby born on February 4 or 5, 2027 is a Horse by custom but already has a Ding-Wei year pillar in BaZi.</p>
+<p>By folk custom the Goat year runs from ${dEn(y.cny)} to ${dEn(y.end)}. Some BaZi schools and practitioners use Lichun, the Start of Spring, as the year-pillar boundary — in 2027 that’s ${dEn(y.lichun)} at ${tHm(y.lichun)} Beijing time, two days <em>before</em> New Year. A baby born between these dates is a Horse under the popular zodiac convention but has a Ding-Wei year pillar under a Lichun-based BaZi convention. The official lunar-calendar Ganzhi year changes at Chinese New Year.</p>
+<p class="src">The Hong Kong Observatory explains the distinction between the official lunar-calendar year and Lichun-based practices in its article <a href="https://www.weather.gov.hk/en/education/astronomy-and-time/time-service/00506-what-year-is-it-today.html" rel="noopener noreferrer">“What year is it today?”</a>.</p>
 <h2 class="sec">What does Ding-Wei mean?</h2>
 <p><strong>Ding (丁)</strong>, the fourth Heavenly Stem, is Yin Fire — traditionally pictured as candle or lamp light: not the sun’s blaze, but a warm, focused glow that lights what’s close.</p>
 <p><strong>Wei (未)</strong>, the eighth Earthly Branch, is Earth and corresponds to late summer, when crops are ripening before harvest. Its animal is the Goat (also called Sheep or Ram).</p>
@@ -615,9 +617,9 @@ function baziBeginnerGuideEn() {
   const title = 'BaZi for Beginners: Four Pillars, Day Master & Five Elements | ONEMING'
   const desc = 'A beginner-friendly guide to BaZi (Four Pillars): what the eight characters mean, how year and day pillars differ, the Five Elements, Ten Gods and the Li Chun boundary.'
   const faqs = [
-    { q: 'Is BaZi the same as the Chinese zodiac?', a: 'No. The popular Chinese zodiac uses the animal associated with a lunar year. BaZi considers the Heavenly Stem and Earthly Branch of the year, month, day and hour, using solar-term boundaries for the year and month pillars.' },
+    { q: 'Is BaZi the same as the Chinese zodiac?', a: 'No. The popular Chinese zodiac uses the animal associated with a lunar year. BaZi considers the Heavenly Stem and Earthly Branch of the year, month, day and hour. Month pillars traditionally follow solar terms; some BaZi schools also use Li Chun as the year-pillar boundary.' },
     { q: 'What is the Day Master in BaZi?', a: 'The Day Master is the Heavenly Stem of the day pillar. It is the reference point for the traditional Five Elements and Ten Gods relationships in a BaZi chart.' },
-    { q: 'Why does my BaZi year animal differ from my Chinese zodiac animal?', a: 'The popular zodiac usually changes at Chinese New Year. BaZi year pillars commonly change at Li Chun (Start of Spring). A birth near these dates can therefore show different year animals.' },
+    { q: 'Why does my BaZi year animal differ from my Chinese zodiac animal?', a: 'The popular zodiac and the official lunar-calendar Ganzhi year change at Chinese New Year. Some BaZi schools and practitioners use Li Chun (Start of Spring) for the year pillar. A birth near these dates can therefore show different year labels under different conventions.' },
     { q: 'Do I need to know my birth hour?', a: 'An exact birth hour is needed to calculate the time pillar. If you do not know it, you can still examine the three known pillars, but the chart is incomplete.' },
   ]
   return head(title, desc, url, { lang: 'en', ads: true }) +
@@ -637,8 +639,8 @@ function baziBeginnerGuideEn() {
 </tbody></table></div>
 <p>Four pillars contain eight characters in total. If your birth hour is unknown, you can examine the year, month and day pillars, but you do not have a complete eight-character chart.</p>
 <h2 class="sec">BaZi versus the Chinese zodiac</h2>
-<p>The familiar <a href="/en/chinese-zodiac/">Chinese zodiac</a> names twelve animals, such as Rabbit, Tiger and Dragon. In popular usage the animal changes at Chinese New Year. In BaZi, the year pillar commonly changes at <strong>Li Chun (立春)</strong>, the Start of Spring solar term, which usually occurs around February 4. The two boundaries can fall on different days.</p>
-<p>For example, Chinese New Year in 1975 began on February 11. Li Chun occurred earlier, on February 4. Someone born between these boundaries can be a Tiger under the popular zodiac convention while having the Yi-Mao (Wood Rabbit) BaZi year pillar. The exact Li Chun date and time must be considered for boundary-day births. <a href="/en/chinese-zodiac/1975/">See the 1975 example</a>.</p>
+<p>The familiar <a href="/en/chinese-zodiac/">Chinese zodiac</a> names twelve animals, such as Rabbit, Tiger and Dragon. In popular usage the animal changes at Chinese New Year. Some BaZi schools and practitioners use <strong>Li Chun (立春)</strong>, the Start of Spring solar term, as the year-pillar boundary, usually around February 4. The official Chinese lunar-calendar Ganzhi year changes at Chinese New Year. The two conventions can fall on different days.</p>
+<p>For example, Chinese New Year in 1975 began on February 11. Li Chun occurred earlier, on February 4. Someone born between these boundaries can be a Tiger under the popular zodiac convention while having the Yi-Mao (Wood Rabbit) BaZi year pillar. The exact Li Chun date and time must be considered when applying a Li Chun-based BaZi convention to boundary-day births. See the <a href="https://www.weather.gov.hk/en/education/astronomy-and-time/time-service/00506-what-year-is-it-today.html" rel="noopener noreferrer">Hong Kong Observatory explanation of the two year-boundary conventions</a>. <a href="/en/chinese-zodiac/1975/">See the 1975 example</a>.</p>
 <h2 class="sec">Heavenly Stems, Earthly Branches and the Five Elements</h2>
 <p>There are ten Heavenly Stems and twelve Earthly Branches. Their pairings repeat in a 60-step cycle. Traditional Chinese thought also associates these symbols with <a href="/en/term/wuxing/">Five Elements</a>: Wood, Fire, Earth, Metal and Water. These elements are symbolic categories of change and relationship, not chemical elements.</p>
 <p>To explore the generating (Sheng) and controlling (Ke) cycles, use the <a href="/en/five-element-colors/">interactive Five Elements guide</a>. An element assigned to a year's Heavenly Stem is not necessarily the same as its poetic <a href="/en/term/nayin/">Na Yin</a> designation.</p>
