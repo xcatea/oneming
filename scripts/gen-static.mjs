@@ -234,8 +234,8 @@ function write(path, content) {
 function homeStatic(lang) {
   if (lang === 'en') {
     return `<main style="max-width:720px;margin:0 auto;padding:40px 20px;font-family:Georgia,serif;color:#211d18">
-<h1>Free BaZi Calculator — Four Pillars chart with every term explained</h1>
-<p>Enter your birth date and time to get your Four Pillars of Destiny (BaZi), Five Elements balance and Ten Gods — plus plain-English explanations of every term. Calculated in your browser. No predictions, no fate-changing.</p>
+<h1>Free BaZi Calculator — Four Pillars &amp; Five Elements Chart</h1>
+<p>Create your Four Pillars of Destiny (BaZi) chart, explore your Five Elements balance and Ten Gods, and read clear English explanations. Calculated in your browser — no sign-up or predictions.</p>
 <p><a href="/en/term/">BaZi glossary</a> · <a href="/en/bazi-for-beginners/">BaZi for beginners</a> · <a href="/en/chinese-zodiac/">Chinese zodiac by year</a> · <a href="/en/2027-year-of-the-fire-goat/">2027 Year of the Fire Goat</a> · <a href="/en/five-element-colors/">Five Element colors</a> · <a href="/">中文版</a></p>
 </main>`
   }
@@ -251,7 +251,7 @@ function injectHome() {
   const src = readFileSync(file, 'utf8')
   const org = { '@context': 'https://schema.org', '@type': 'Organization', name: '一命 ONEMING', url: `${BASE}/`, logo: `${BASE}/share-cover.png`, sameAs: ['https://github.com/xcatea/oneming'] }
   const siteZh = { '@context': 'https://schema.org', '@type': 'WebSite', name: '一命 ONEMING', alternateName: 'oneming', url: `${BASE}/`, inLanguage: 'zh-CN', description: '免费八字排盘与命盘术语解释工具：四柱八字、五行分布、十神关系，并解释命盘中出现的每一个专业术语。' }
-  const appEn = { '@context': 'https://schema.org', '@type': 'WebApplication', name: 'ONEMING BaZi Calculator', url: `${BASE}/en/`, applicationCategory: 'LifestyleApplication', operatingSystem: 'Any', inLanguage: 'en', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, description: 'Free BaZi (Four Pillars) calculator with Five Elements, Ten Gods and every term explained in plain English.' }
+  const appEn = { '@context': 'https://schema.org', '@type': 'WebApplication', name: 'ONEMING BaZi Calculator', url: `${BASE}/en/`, applicationCategory: 'LifestyleApplication', operatingSystem: 'Any', inLanguage: 'en', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, description: 'Free Four Pillars of Destiny (BaZi) calculator with a Five Elements chart, Day Master and Ten Gods explained in plain English.' }
   const ldTag = (o) => `<script type="application/ld+json">${JSON.stringify(o)}</script>`
 
   // 中文首页
@@ -262,14 +262,14 @@ function injectHome() {
   // 英文首页 /en/：同一个 App，按路径切英文；改写 head 让它成为独立可收录的英文页
   let en = src
     .replace('<html lang="zh-CN">', '<html lang="en">')
-    .replace(/<title>[\s\S]*?<\/title>/, '<title>Free BaZi Calculator · Four Pillars Chart with Every Term Explained | ONEMING</title>')
-    .replace(/<meta name="description" content="[^"]*"/, '<meta name="description" content="Free BaZi (Four Pillars of Destiny) calculator: get your Day Master, Five Elements balance and Ten Gods, with every Chinese metaphysics term explained in plain English. No sign-up, no predictions."')
+    .replace(/<title>[\s\S]*?<\/title>/, '<title>Free BaZi Calculator | Four Pillars &amp; Five Elements Chart | ONEMING</title>')
+    .replace(/<meta name="description" content="[^"]*"/, '<meta name="description" content="Free BaZi calculator for your Four Pillars of Destiny. Explore your Day Master, Five Elements balance and Ten Gods in plain English. Calculated in your browser."')
     .replace(/<link rel="canonical" href="[^"]*"/, `<link rel="canonical" href="${BASE}/en/"`)
     .replace(/<meta property="og:url" content="[^"]*"/, `<meta property="og:url" content="${BASE}/en/"`)
-    .replace(/<meta property="og:title" content="[^"]*"/, '<meta property="og:title" content="Free BaZi Calculator — every term in your chart explained"')
-    .replace(/<meta property="og:description" content="[^"]*"/, '<meta property="og:description" content="Your Four Pillars, Five Elements and Ten Gods, explained in plain English. Free forever."')
-    .replace(/<meta name="twitter:title" content="[^"]*"/, '<meta name="twitter:title" content="Free BaZi Calculator — every term in your chart explained"')
-    .replace(/<meta name="twitter:description" content="[^"]*"/, '<meta name="twitter:description" content="Your Four Pillars, Five Elements and Ten Gods, explained in plain English. Free forever."')
+    .replace(/<meta property="og:title" content="[^"]*"/, '<meta property="og:title" content="Free BaZi Calculator | Four Pillars &amp; Five Elements Chart"')
+    .replace(/<meta property="og:description" content="[^"]*"/, '<meta property="og:description" content="Your Four Pillars of Destiny, Five Elements balance and Ten Gods — clearly explained in English."')
+    .replace(/<meta name="twitter:title" content="[^"]*"/, '<meta name="twitter:title" content="Free BaZi Calculator | Four Pillars &amp; Five Elements Chart"')
+    .replace(/<meta name="twitter:description" content="[^"]*"/, '<meta name="twitter:description" content="Your Four Pillars of Destiny, Five Elements balance and Ten Gods — clearly explained in English."')
     .replace('<meta property="og:site_name" content="一命 ONEMING" />', '<meta property="og:site_name" content="ONEMING" />')
   en = en.replace('</head>', `${ldTag(org)}\n${ldTag(appEn)}\n${analyticsTags()}</head>`)
   en = en.replace('<div id="root"></div>', `<div id="root">${homeStatic('en')}</div>`)

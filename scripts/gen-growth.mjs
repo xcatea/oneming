@@ -218,12 +218,34 @@ function animalPageEn(a) {
   const url = `${BASE}${hrefEn.animal(a)}`
   const r = relationsOf(a)
   const ys = yearsOf(a)
-  const title = `Year of the ${a.en}: Personality, Years & Compatibility | Chinese Zodiac ${a.en}`
-  const desc = `Chinese zodiac ${a.en} (${a.zh}, Earthly Branch ${a.zhi}): personality traits, every ${a.en} year from ${ys[0].Y} to ${ys.at(-1).Y} with its element, best matches (${r.sanhe.map((x) => x.en).join(', ')}, ${r.liuhe.en}) and clash (${r.chong.en}).`
+  const seoOverrides = {
+    snake: {
+      title: 'Year of the Snake: Years, Traits & Five Elements | Chinese Zodiac',
+      desc: 'Explore Snake years, Chinese New Year dates, Five Element variations, traditional traits and zodiac relationships. See how a full BaZi chart reads all four pillars.',
+    },
+    monkey: {
+      title: 'Year of the Monkey: Years & Compatibility | Chinese Zodiac',
+      desc: 'Find Monkey years, Chinese New Year dates, traditional traits, Five Element variations and zodiac relationships. Try the free BaZi calculator for all four pillars.',
+    },
+    rabbit: {
+      title: 'Year of the Rabbit: Traits & Five Elements | Chinese Zodiac',
+      desc: 'Explore Rabbit years, exact Chinese New Year dates, Five Element variations and traditional symbolism. A full BaZi chart reads your month, day and hour pillars.',
+    },
+    rat: {
+      title: 'Year of the Rat: Years, Traits & Compatibility | Chinese Zodiac',
+      desc: 'Find Rat years, Chinese New Year dates, traditional traits, Five Element variations and zodiac relationships. Explore all four pillars with a BaZi chart.',
+    },
+    goat: {
+      title: 'Year of the Goat: Years & Five Elements | Chinese Zodiac',
+      desc: 'Explore Goat years, Chinese New Year dates, Five Element variations and traditional symbolism. Use a free BaZi calculator to read all four pillars.',
+    },
+  }
+  const title = seoOverrides[a.id]?.title || ('Year of the ' + a.en + ': Personality, Years & Compatibility | Chinese Zodiac ' + a.en)
+  const desc = seoOverrides[a.id]?.desc || ('Chinese zodiac ' + a.en + ' (' + a.zh + ', Earthly Branch ' + a.zhi + '): personality traits, every ' + a.en + ' year from ' + ys[0].Y + ' to ' + ys.at(-1).Y + ' with its element, best matches (' + r.sanhe.map((x) => x.en).join(', ') + ', ' + r.liuhe.en + ') and clash (' + r.chong.en + ').')
   const faqs = [
     { q: `What years are the Year of the ${a.en}?`, a: `Recent ${a.en} years: ${ys.map((y) => y.Y).join(', ')}. Each starts at Chinese New Year, so if you were born in January or early February, check the exact dates in the table.` },
     { q: `Which signs are most compatible with the ${a.en}?`, a: `Traditionally the ${a.en} forms a "Three Harmony" group with the ${r.sanhe.map((x) => x.en).join(' and ')} (${r.sanhe.map((x) => x.zhi).join('')}${a.zhi}, a ${EL_EN(r.sanheEl)} alliance) and a "Six Harmony" pair with the ${r.liuhe.en}. Its opposite (clash) is the ${r.chong.en}. These are structural relationships between Earthly Branches — fun to know, not rules for real relationships.` },
-    { q: `Does the ${a.en} year start on January 1?`, a: `No. In the popular Chinese zodiac, a new ${a.en} year begins on Chinese New Year, not January 1. BaZi year pillars commonly use Li Chun (Start of Spring) instead; dates near either boundary need care.` },
+    { q: `Does the ${a.en} year start on January 1?`, a: `No. In the popular Chinese zodiac and the official lunar-calendar Ganzhi year, the year changes at Chinese New Year. Some BaZi schools and practitioners use Li Chun (Start of Spring) as the year-pillar boundary instead; dates near either boundary need care.` },
     { q: `What does the ${a.en} represent in Chinese culture?`, a: a.cultureEn },
     { q: `What element is the ${a.en}?`, a: `The ${a.en}’s fixed element is ${a.yang ? 'Yang' : 'Yin'} ${EL_EN(a.el)} (from its branch ${a.zhi}). Each ${a.en} year also has a stem element, which is why there are Wood, Fire, Earth, Metal and Water ${a.en}s.` },
   ]
@@ -236,6 +258,7 @@ function animalPageEn(a) {
 <h1>Year of the ${a.en}</h1>
 <div class="en">${a.zh} · Earthly Branch ${a.zhi} (${BRANCH_EN[a.zhi]})</div>
 <div class="facts"><div><b>Branch</b><span>${a.zhi} ${BRANCH_EN[a.zhi]}</span></div><div><b>Fixed element</b><span>${a.yang ? 'Yang' : 'Yin'} ${EL_EN(a.el)}</span></div><div><b>Hour</b><span>${a.hour}</span></div><div><b>Three Harmony</b><span>${r.sanhe.map((x) => x.en).join(', ')}</span></div><div><b>Six Harmony</b><span>${r.liuhe.en}</span></div><div><b>Clash</b><span>${r.chong.en}</span></div></div>
+${seoOverrides[a.id] ? `<p class="def">Your zodiac animal is only the year branch. Use the <a href="/en/">free BaZi calculator</a> to explore all four pillars, your Day Master and Five Elements balance.</p>` : ''}
 <h2 class="sec">The ${a.en} in Chinese culture</h2>
 <p>${a.cultureEn}</p>
 <p>The ${a.en} is associated with the Earthly Branch ${a.zhi} (${BRANCH_EN[a.zhi]}). In the traditional twelve-branch cycle, this same sign is used for years, months and two-hour periods. The cultural story and the calendrical system are related, but they are not the same thing.</p>
@@ -346,7 +369,7 @@ function yearPageEn(Y) {
 <li><a href="https://www.weather.gov.hk/en/education/astronomy-and-time/time-service/00506-what-year-is-it-today.html" rel="noopener noreferrer">Hong Kong Observatory: What year is it today?</a> — explains why the official lunar-calendar Ganzhi year changes at Lunar New Year while some fortune-telling practices use Lichun.</li>
 <li><a href="https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83/%E5%8D%B7%E4%B8%80" rel="noopener noreferrer">San Ming Tong Hui (三命通會), Volume 1</a> — classical reference for the Na Yin name associated with this stem-branch pair.</li>
 </ul>
-<p class="src">The Li Chun time shown on this page is calculated by the site's calendar engine and expressed in Beijing time (UTC+8). The popular zodiac animal changes at Chinese New Year; BaZi year-pillar calculations commonly use Li Chun.</p>
+<p class="src">The Li Chun time shown on this page is calculated by the site's calendar engine and expressed in Beijing time (UTC+8). The popular zodiac and official lunar-calendar Ganzhi year change at Chinese New Year; some BaZi schools and practitioners use Li Chun as the year-pillar boundary.</p>
 </div>
 ` : ''
   const yearSpecificExtraEn = [1986, 1995, 1998].includes(Y) ? `
@@ -357,7 +380,7 @@ function yearPageEn(Y) {
 <p>${Y === 1986 ? 'Tiger symbolism is often associated in popular zodiac writing with courage, initiative and a strong presence. Fire is used as a symbol of warmth, visibility and movement.' : Y === 1995 ? 'Pig symbolism is often associated in popular zodiac writing with generosity, sincerity and enjoyment of ordinary comforts. Wood is used as a symbol of growth, flexibility and cultivation.' : 'Tiger symbolism is often associated in popular zodiac writing with courage, initiative and a strong presence. Earth is used as a symbol of steadiness, support and practical care.'}</p>
 <p>These are traditional cultural associations, not scientifically validated personality traits or reliable predictions. A birth-year animal and stem alone cannot determine an individual's character, career, finances, health or relationships. A full BaZi reading uses the year, month, day and hour pillars, and interpretations vary by school.</p>
 <h2 class="sec">Check the exact birthday</h2>
-<p>The ${Y} zodiac-year interval runs from <strong>${dEn(y.cny)}</strong> to <strong>${dEn(y.end)}</strong> under the Chinese New Year convention. If you were born in January or early February, check your complete birth date rather than using the Gregorian year alone. BaZi also observes the Li Chun boundary, which may produce a different year pillar for births between the two dates.</p>
+<p>The ${Y} zodiac-year interval runs from <strong>${dEn(y.cny)}</strong> to <strong>${dEn(y.end)}</strong> under the Chinese New Year convention. If you were born in January or early February, check your complete birth date rather than using the Gregorian year alone. Some BaZi schools and practitioners use Li Chun as the year-pillar boundary, which may produce a different year pillar for births between the two dates.</p>
 ` : ''
   const yearSpecificEn = Y === 1975 ? `
 <h2 class="sec">Why 1975 is called the Wood Rabbit year</h2>

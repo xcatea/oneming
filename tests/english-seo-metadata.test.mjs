@@ -1,4 +1,5 @@
 import { test } from 'node:test'
+import { readFileSync } from 'node:fs'
 import assert from 'node:assert/strict'
 import { buildGrowth } from '../scripts/gen-growth.mjs'
 import { TERMS } from '../src/terms.js'
@@ -33,4 +34,14 @@ test('every generated English page has a unique canonical, title and description
     if (title) titles.add(title)
   }
   assert.deepEqual(failures, [])
+})
+
+test('English calculator homepage title, static heading and app heading share one search intent', () => {
+  const staticBuilder = readFileSync(new URL('../scripts/gen-static.mjs', import.meta.url), 'utf8')
+  const appStrings = readFileSync(new URL('../src/strings.js', import.meta.url), 'utf8')
+  assert.ok(staticBuilder.includes('<title>Free BaZi Calculator | Four Pillars &amp; Five Elements Chart | ONEMING</title>'))
+  assert.ok(staticBuilder.includes('<h1>Free BaZi Calculator — Four Pillars &amp; Five Elements Chart</h1>'))
+  assert.ok(staticBuilder.includes('Free BaZi calculator for your Four Pillars of Destiny. Explore your Day Master, Five Elements balance and Ten Gods in plain English. Calculated in your browser.'))
+  assert.ok(appStrings.includes("heroSeo: 'Free BaZi Calculator — Four Pillars & Five Elements Chart'"))
+  assert.ok(appStrings.includes('Create your Four Pillars of Destiny (BaZi) chart, explore your Five Elements balance and Ten Gods'))
 })
