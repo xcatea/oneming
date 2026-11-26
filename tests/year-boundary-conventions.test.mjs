@@ -45,3 +45,22 @@ test('Chinese year pages explain the difference between official lunar-year and 
     assert.ok(html.includes('香港天文台《今夕是何年？》'), path)
   }
 })
+
+test('zodiac hubs and 2027 / beginner pages use qualified boundary language', () => {
+  const pages = generatedPages()
+  const zhHub = pages.get('shengxiao/index.html')
+  const enHub = pages.get('en/chinese-zodiac/index.html')
+  const zh2027 = pages.get('2027-huoyang/index.html')
+  const en2027 = pages.get('en/2027-year-of-the-fire-goat/index.html')
+  const beginner = pages.get('en/bazi-for-beginners/index.html')
+
+  assert.ok(zhHub.includes('部分八字流派和命理实践'))
+  assert.ok(enHub.includes('Some BaZi schools and practitioners'))
+  assert.ok(zh2027.includes('部分八字流派采用立春换年'))
+  assert.ok(zh2027.includes('香港天文台《今夕是何年？》'))
+  assert.ok(en2027.includes('Some BaZi schools and practitioners use Lichun'))
+  assert.ok(en2027.includes('Hong Kong Observatory explanation'))
+  assert.ok(beginner.includes('Month pillars traditionally follow solar terms'))
+  assert.ok(beginner.includes('some BaZi schools also use Li Chun'))
+  assert.ok(!beginner.includes('In BaZi, the year pillar commonly changes'))
+})
